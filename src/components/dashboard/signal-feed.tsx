@@ -118,6 +118,12 @@ export function SignalFeed({
   const hasNext = page < totalPages;
   const hasPrev = page > 1;
 
+  const validMatches = initialMatches.filter(
+    (match): match is typeof match & { signal: NonNullable<typeof match.signal> } =>
+      match.signal != null
+  );
+  const isEmpty = validMatches.length === 0;
+
   // Defer Select to client-only to avoid Radix useId hydration mismatch (aria-controls)
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -177,19 +183,32 @@ export function SignalFeed({
 
       {/* Feed */}
       <div className={cn("transition-opacity", isPending && "opacity-60")}>
-        {initialMatches.length === 0 ? (
+        {isEmpty ? (
           <EmptyState
             icon={Radio}
-            title="No signals yet"
-            description="Your personalized signal feed will appear here once we find matches for your profile."
+            title={
+              initialCategory || initialRegion
+                ? "No signals match your filters"
+                : "No signals yet"
+            }
+            description={
+              initialCategory || initialRegion
+                ? "Try selecting a different category or region, or clear your filters to see all signals."
+                : "Your personalized signal feed will appear here once we find matches for your profile."
+            }
+            action={
+              initialCategory || initialRegion
+                ? {
+                    label: "Clear filters",
+                    onClick: () =>
+                      updateParams({ category: undefined, region: undefined }),
+                  }
+                : undefined
+            }
           />
         ) : (
           <div className="space-y-4">
-            {initialMatches
-              .filter((match): match is typeof match & { signal: NonNullable<typeof match.signal> } =>
-                match.signal != null
-              )
-              .map((match) => (
+            {validMatches.map((match) => (
                 <SignalCard
                   key={match.id}
                   signal={match.signal}
