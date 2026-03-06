@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { SignalCard } from "@/components/shared/signal-card";
@@ -118,6 +118,10 @@ export function SignalFeed({
   const hasNext = page < totalPages;
   const hasPrev = page > 1;
 
+  // Defer Select to client-only to avoid Radix useId hydration mismatch (aria-controls)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <div className="space-y-6">
       {/* Filter bar */}
@@ -143,27 +147,31 @@ export function SignalFeed({
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <Select
-            value={initialRegion ?? "all"}
-            onValueChange={(v) =>
-              updateParams({
-                category: initialCategory,
-                region: v === "all" ? undefined : v,
-              })
-            }
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Region" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All regions</SelectItem>
-              {US_STATES.map((state) => (
-                <SelectItem key={state} value={state}>
-                  {state}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {mounted ? (
+            <Select
+              value={initialRegion ?? "all"}
+              onValueChange={(v) =>
+                updateParams({
+                  category: initialCategory,
+                  region: v === "all" ? undefined : v,
+                })
+              }
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All regions</SelectItem>
+                {US_STATES.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="h-9 w-[140px] animate-pulse rounded-md border border-input bg-muted/30" />
+          )}
         </div>
       </div>
 
@@ -177,21 +185,25 @@ export function SignalFeed({
           />
         ) : (
           <div className="space-y-4">
-            {initialMatches.map((match) => (
-              <SignalCard
-                key={match.id}
-                signal={match.signal}
-                relevance_score={match.relevance_score}
-                why_it_matters={match.why_it_matters}
-                action_suggestion={match.action_suggestion}
-                is_read={match.is_read}
-                is_bookmarked={match.is_bookmarked}
-                onBookmarkToggle={() =>
-                  handleBookmarkToggle(match.id, match.is_bookmarked)
-                }
-                onMarkRead={() => handleMarkRead(match.id)}
-              />
-            ))}
+            {initialMatches
+              .filter((match): match is typeof match & { signal: NonNullable<typeof match.signal> } =>
+                match.signal != null
+              )
+              .map((match) => (
+                <SignalCard
+                  key={match.id}
+                  signal={match.signal}
+                  relevance_score={match.relevance_score}
+                  why_it_matters={match.why_it_matters}
+                  action_suggestion={match.action_suggestion}
+                  is_read={match.is_read}
+                  is_bookmarked={match.is_bookmarked}
+                  onBookmarkToggle={() =>
+                    handleBookmarkToggle(match.id, match.is_bookmarked)
+                  }
+                  onMarkRead={() => handleMarkRead(match.id)}
+                />
+              ))}
           </div>
         )}
 

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3005",
     "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3005/api/inngest",
-    "dev:all": "npm run dev & npm run dev:inngest",
+    "dev:all": "concurrently -n next,inngest \"npm run dev\" \"npm run dev:inngest\"",
     "build": "next build",
     "start": "next start --port 3005",
     "lint": "eslint",
@@ -18,6 +18,8 @@
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:seed": "supabase db reset --seed supabase/seed.sql",
+    "trigger:pipeline": "INNGEST_DEV=1 node scripts/trigger-inngest.mjs",
+    "backfill:profile-embeddings": "INNGEST_DEV=1 node scripts/backfill-profile-embeddings.mjs",
     "db:types": "supabase gen types typescript --local > src/types/supabase.ts",
     "deploy:preview": "vercel",
     "deploy:prod": "vercel --prod",

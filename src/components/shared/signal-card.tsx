@@ -104,7 +104,10 @@ export function SignalCard({
           </h3>
 
           {displayDate && (
-            <p className="text-xs text-muted-foreground">
+            <p
+              className="text-xs text-muted-foreground"
+              suppressHydrationWarning
+            >
               {relativeDate(displayDate)}
             </p>
           )}

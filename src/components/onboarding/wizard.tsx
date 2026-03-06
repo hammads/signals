@@ -86,22 +86,27 @@ export function OnboardingWizard() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 py-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Set up your signal profile
+    <div className="mx-auto max-w-2xl space-y-10 py-12">
+      <div className="space-y-4 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+          Complete Your Signal Profile
         </h1>
-        <p className="text-muted-foreground text-sm">
-          Step {currentStep + 1} of {STEP_TITLES.length}: {STEP_TITLES[currentStep]}
-        </p>
-        <Progress value={progress} className="h-2" />
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm font-bold text-muted-foreground uppercase tracking-widest">
+            <span>Step {currentStep + 1} of {STEP_TITLES.length}</span>
+            <span>{STEP_TITLES[currentStep]}</span>
+          </div>
+          <Progress value={progress} className="h-3 rounded-full bg-secondary/20 overflow-hidden">
+            <div className="h-full bg-primary transition-all duration-500 ease-in-out" />
+          </Progress>
+        </div>
       </div>
 
-      <Card className="border-2 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-lg">{STEP_TITLES[currentStep]}</CardTitle>
+      <Card className="border-border/50 shadow-2xl shadow-primary/5 rounded-3xl overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/50 py-6 px-8">
+          <CardTitle className="text-xl font-bold text-foreground">{STEP_TITLES[currentStep]}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-8">
           {currentStep === 0 && (
             <StepCompany
               data={formData}

@@ -58,12 +58,14 @@ function SidebarContent({ user, profile }: DashboardSidebarProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <Satellite className="size-6 text-primary" />
-        <span className="font-semibold tracking-tight">AI Signals Radar</span>
+      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Satellite className="size-5" />
+        </div>
+        <span className="font-bold tracking-tight text-foreground">AI Signals Radar</span>
       </div>
 
-      <nav className="flex-1 space-y-0.5 p-3">
+      <nav className="flex-1 space-y-1 p-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (
@@ -72,37 +74,37 @@ function SidebarContent({ user, profile }: DashboardSidebarProps) {
               href={href}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
-              <Icon className="size-4 shrink-0" />
+              <Icon className={cn("size-4.5 shrink-0", isActive ? "text-white" : "text-muted-foreground")} />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      <Separator className="mx-3" />
+      <Separator className="mx-4 opacity-50" />
 
-      <div className="p-3">
+      <div className="p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 px-3 py-2 h-auto"
+              className="w-full justify-start gap-3 rounded-xl px-3 py-2.5 h-auto hover:bg-sidebar-accent transition-colors"
             >
-              <Avatar size="sm" className="size-8">
+              <Avatar size="sm" className="size-9 border-2 border-background shadow-sm">
                 <AvatarImage src={user.user_metadata?.avatar_url} alt="" />
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-bold">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex flex-1 flex-col items-start overflow-hidden text-left">
-                <span className="truncate text-sm font-medium">
+                <span className="truncate text-sm font-bold text-foreground">
                   {displayName}
                 </span>
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="truncate text-[11px] font-medium text-muted-foreground/80">
                   {user.email}
                 </span>
               </div>

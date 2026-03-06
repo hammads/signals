@@ -27,6 +27,12 @@ vi.mock("@/lib/supabase/server", () => ({
   createServiceClient: vi.fn().mockResolvedValue(mockSupabase),
 }));
 
+vi.mock("ai", () => ({
+  embed: vi.fn().mockResolvedValue({
+    embedding: new Array(1536).fill(0).map((_, i) => (i % 100) / 100),
+  }),
+}));
+
 import { GET, PUT } from "@/app/api/profiles/signal-profile/route";
 import { POST } from "@/app/api/profiles/onboarding/route";
 

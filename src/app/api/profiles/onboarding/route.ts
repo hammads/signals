@@ -1,5 +1,8 @@
+import { embed } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { buildProfileEmbeddingText } from "@/lib/utils";
 import { onboardingCompleteSchema } from "@/types/schemas";
 
 export async function POST(request: Request) {
@@ -26,6 +29,16 @@ export async function POST(request: Request) {
 
     const data = parsed.data;
 
+    const profileEmbedding = await (async () => {
+      const text = buildProfileEmbeddingText(data);
+      if (!text.trim()) return null;
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: text,
+      });
+      return embedding as unknown as number[];
+    })();
+
     const { error: profileError } = await supabase
       .from("signal_profiles")
       .insert({
@@ -39,6 +52,7 @@ export async function POST(request: Request) {
         funding_sources: data.funding_sources,
         competitor_names: data.competitor_names,
         bellwether_districts: data.bellwether_districts,
+        profile_embedding: profileEmbedding,
       });
 
     if (profileError) {

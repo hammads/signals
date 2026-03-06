@@ -34,8 +34,15 @@ export const summarizeSignals = inngest.createFunction(
         const embedding = (signal as Signal).content_embedding;
         if (!embedding?.length) return;
 
+        const embeddingStr = Array.isArray(embedding)
+          ? `[${embedding.join(",")}]`
+          : typeof embedding === "string"
+            ? embedding
+            : null;
+        if (!embeddingStr) return;
+
         const { data: matches } = await supabase.rpc("match_signal_to_profiles", {
-          signal_embedding: `[${embedding.join(",")}]`,
+          signal_embedding: embeddingStr,
           match_threshold: 0.3,
           match_count: 50,
         });

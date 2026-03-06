@@ -1,5 +1,8 @@
+import { embed } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { buildProfileEmbeddingText } from "@/lib/utils";
 import { signalProfileSchema } from "@/types/schemas";
 
 export async function GET() {
@@ -63,16 +66,28 @@ export async function PUT(request: Request) {
 
     const profileData = parsed.data;
 
+    const profileEmbedding = await (async () => {
+      const text = buildProfileEmbeddingText(profileData);
+      if (!text.trim()) return null;
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: text,
+      });
+      return embedding as unknown as number[];
+    })();
+
     const { data: existing } = await supabase
       .from("signal_profiles")
       .select("id")
       .eq("user_id", user.id)
       .single();
 
+    const dataToSave = { ...profileData, profile_embedding: profileEmbedding };
+
     if (existing) {
       const { data: updated, error: updateError } = await supabase
         .from("signal_profiles")
-        .update(profileData)
+        .update(dataToSave)
         .eq("user_id", user.id)
         .select()
         .single();
@@ -84,7 +99,7 @@ export async function PUT(request: Request) {
     } else {
       const { data: inserted, error: insertError } = await supabase
         .from("signal_profiles")
-        .insert({ user_id: user.id, ...profileData })
+        .insert({ user_id: user.id, ...dataToSave })
         .select()
         .single();
 
