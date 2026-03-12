@@ -10,6 +10,7 @@ import {
   Activity,
   Shield,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import { signOut } from "@/lib/supabase/actions";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/admin/signals", label: "Signals", icon: Radio },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/pipeline-runs", label: "Pipeline Runs", icon: Activity },
+  { href: "/admin/help", label: "Help", icon: BookOpen },
 ] as const;
 
 interface AdminSidebarProps {
