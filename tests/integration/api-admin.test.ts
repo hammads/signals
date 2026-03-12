@@ -39,6 +39,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { GET as getStats } from "@/app/api/admin/stats/route";
 import { GET as getDataSources, POST as createDataSource } from "@/app/api/admin/data-sources/route";
+import { PATCH as updateUserRole } from "@/app/api/admin/users/[id]/route";
 
 describe("GET /api/admin/stats", () => {
   beforeEach(() => {
@@ -168,5 +169,82 @@ describe("POST /api/admin/data-sources", () => {
     const response = await createDataSource(request);
     if (!response) throw new Error("Expected response");
     expect(response.status).toBe(403);
+  });
+});
+
+describe("PATCH /api/admin/users/[id]", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: mockAdminUser },
+      error: null,
+    });
+    const chain = mockSupabase.from();
+    chain.single.mockResolvedValue({
+      data: { role: "admin" },
+      error: null,
+    });
+    chain.update.mockReturnValue(chain);
+    chain.select.mockReturnValue(chain);
+  });
+
+  it("returns 400 when admin tries to change own role", async () => {
+    const request = new Request(
+      `http://localhost:3000/api/admin/users/${mockAdminUser.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ role: "founder" }),
+      }
+    );
+    const response = await updateUserRole(request, {
+      params: Promise.resolve({ id: mockAdminUser.id }),
+    });
+    if (!response) throw new Error("Expected response");
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain("cannot change your own");
+  });
+
+  it("returns 400 for invalid role", async () => {
+    const request = new Request(
+      "http://localhost:3000/api/admin/users/user-123",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ role: "superadmin" }),
+      }
+    );
+    const response = await updateUserRole(request, {
+      params: Promise.resolve({ id: "user-123" }),
+    });
+    if (!response) throw new Error("Expected response");
+    expect(response.status).toBe(400);
+  });
+
+  it("updates role for another user", async () => {
+    const updatedProfile = {
+      id: "user-123",
+      email: "user@example.com",
+      role: "admin",
+    };
+    const chain = mockSupabase.from();
+    chain.single.mockResolvedValue({
+      data: updatedProfile,
+      error: null,
+    });
+
+    const request = new Request(
+      "http://localhost:3000/api/admin/users/user-123",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ role: "admin" }),
+      }
+    );
+    const response = await updateUserRole(request, {
+      params: Promise.resolve({ id: "user-123" }),
+    });
+    if (!response) throw new Error("Expected response");
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.role).toBe("admin");
   });
 });

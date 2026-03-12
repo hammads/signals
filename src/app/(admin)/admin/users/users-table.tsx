@@ -16,15 +16,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { relativeDate } from "@/lib/utils";
 import type { Profile } from "@/types/database";
+import type { UserRole } from "@/types/database";
 
 interface UsersTableProps {
   profiles: Profile[];
+  currentUserId: string | null;
 }
 
-export function UsersTable({ profiles }: UsersTableProps) {
+export function UsersTable({ profiles, currentUserId }: UsersTableProps) {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [profilesState, setProfilesState] = useState(profiles);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString(undefined, {
@@ -33,6 +45,33 @@ export function UsersTable({ profiles }: UsersTableProps) {
       day: "numeric",
     });
   }
+
+  async function handleRoleChange(profileId: string, newRole: UserRole) {
+    setError(null);
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/admin/users/${profileId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update role");
+      setProfilesState((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, role: newRole } : p))
+      );
+      setSelectedProfile((prev) =>
+        prev?.id === profileId ? { ...prev, role: newRole } : prev
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update role");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  const canChangeRole = (profileId: string) =>
+    currentUserId !== null && profileId !== currentUserId;
 
   return (
     <>
@@ -49,14 +88,14 @@ export function UsersTable({ profiles }: UsersTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {profiles.length === 0 ? (
+            {profilesState.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                   No users yet
                 </TableCell>
               </TableRow>
             ) : (
-              profiles.map((profile) => (
+              profilesState.map((profile) => (
                 <TableRow
                   key={profile.id}
                   className="cursor-pointer hover:bg-muted/50"
@@ -100,7 +139,12 @@ export function UsersTable({ profiles }: UsersTableProps) {
 
       <Dialog
         open={!!selectedProfile}
-        onOpenChange={(open) => !open && setSelectedProfile(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedProfile(null);
+            setError(null);
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -122,9 +166,37 @@ export function UsersTable({ profiles }: UsersTableProps) {
                 <span className="font-medium text-muted-foreground">Company</span>
                 <p>{selectedProfile.company_name ?? "—"}</p>
               </div>
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
               <div>
                 <span className="font-medium text-muted-foreground">Role</span>
-                <p className="capitalize">{selectedProfile.role}</p>
+                {canChangeRole(selectedProfile.id) ? (
+                  <Select
+                    value={selectedProfile.role}
+                    onValueChange={(value) =>
+                      handleRoleChange(selectedProfile.id, value as UserRole)
+                    }
+                    disabled={isUpdating}
+                  >
+                    <SelectTrigger className="mt-1.5 w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="founder">Founder</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="capitalize mt-1.5">
+                    {selectedProfile.role}
+                    {selectedProfile.id === currentUserId && (
+                      <span className="text-muted-foreground text-xs ml-1">
+                        (you)
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
               <div>
                 <span className="font-medium text-muted-foreground">Onboarding</span>

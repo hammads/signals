@@ -1,9 +1,14 @@
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { UsersTable } from "./users-table";
 
 export default async function UsersPage() {
-  const supabase = await createServiceClient();
-  const { data: profiles } = await supabase
+  const [authClient, serviceClient] = await Promise.all([
+    createClient(),
+    createServiceClient(),
+  ]);
+  const { data: { user } } = await authClient.auth.getUser();
+  const { data: profiles } = await serviceClient
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });
@@ -16,7 +21,7 @@ export default async function UsersPage() {
           Manage user accounts and profiles
         </p>
       </div>
-      <UsersTable profiles={profiles ?? []} />
+      <UsersTable profiles={profiles ?? []} currentUserId={user?.id ?? null} />
     </div>
   );
 }
