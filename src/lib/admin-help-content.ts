@@ -61,14 +61,16 @@ The dashboard displays five key metrics at a glance:
 
 ### Recent Pipeline Activity Table
 
-The table shows the last 10 pipeline runs across all data sources. For each run you can see:
+The table shows the last 10 pipeline runs across all data sources. Runs are nested: parent runs (RSS, SAM.gov, AI Search) may have child runs for individual data sources. For each run you can see:
 
-- **Data Source** — Which source was scanned
+- **Data Source** — Which source was scanned (e.g., "EdWeek RSS", "RSS", "SAM.gov", "AI Search")
 - **Status** — pending, running, completed, or failed
 - **Signals Found** — Number of new signals discovered
 - **Duration** — How long the run took (in seconds)
 - **Error** — Error message if the run failed
 - **Created** — When the run was triggered
+
+Use the **⋮** menu on a run to **View logs**, **Cancel** (running/pending only), or **Delete**.
 
 ### Sidebar Navigation
 
@@ -162,6 +164,10 @@ SAM.gov is configured via environment variable \`SAM_GOV_API_KEY\`. It is not ad
 ### Enabling and Disabling
 
 Each data source has an **is_active** flag. Disabled sources are not scanned. Use this to pause a source without deleting it.
+
+### Scanning a Single Source
+
+For RSS and AI Search sources, you can scan one source immediately: click **Scan** on that row in the Data Sources table. This triggers a pipeline run for just that source. SAM.gov is not per-source — use **Run Pipeline** on the Pipeline Runs page.
 `,
   },
   {
@@ -206,12 +212,12 @@ Most news sites and blogs provide an RSS feed. Look for:
 
 ### Step 4: Submit
 
-Click **Add**. The source appears in the table. It will be scanned on the next pipeline run (or immediately if you trigger one).
+Click **Add**. The source appears in the table. It will be scanned on the next pipeline run. You can also click **Scan** on that row to scan just that source immediately.
 
 ### Step 5: Verify
 
 1. Go to **Admin → Pipeline Runs**
-2. Trigger a pipeline run (or wait for the scheduled run)
+2. Click **Run Pipeline** (or use **Scan** on the Data Sources table for that source)
 3. Go to **Admin → Signals**
 4. Filter or search for content from your new source
 
@@ -357,9 +363,11 @@ The \`summarize-signals\` job:
 Admins can trigger the pipeline manually:
 
 1. Go to **Admin → Pipeline Runs**
-2. Click **Trigger Pipeline**
+2. Click **Run Pipeline**
 3. This runs: \`pipeline/scan.rss\`, \`pipeline/scan.sam-gov\`, \`pipeline/scan.ai-search\`
 4. New signals are collected, embedded, and matched
+
+You can also scan a **single source** from **Admin → Data Sources**: click **Scan** on an RSS or AI Search row. SAM.gov is not per-source — it runs as a full scan.
 
 ### Pipeline Run Statuses
 
@@ -367,6 +375,8 @@ Admins can trigger the pipeline manually:
 - **running** — In progress
 - **completed** — Finished successfully (check \`signals_found\`)
 - **failed** — Error (check \`error_message\`)
+
+Use the **⋮** menu on a run to **View logs**, **Cancel** (running/pending only), or **Delete**.
 `,
   },
   {
@@ -386,15 +396,19 @@ Sometimes you need fresh signals immediately — for example, after adding a new
 - **Demo / onboarding** — You want to show a client a populated dashboard
 - **Troubleshooting** — You're testing whether a source or config change works
 
-### How to Trigger
+### How to Trigger (Full Pipeline)
 
 1. Go to **Admin → Pipeline Runs**
-2. Click the **Trigger Pipeline** button (top right)
+2. Click the **Run Pipeline** button (top right)
 3. The system queues runs for:
    - RSS scan (all active RSS sources)
    - SAM.gov scan
    - AI Search scan
 4. Runs appear in the table with status **pending** → **running** → **completed** (or **failed**)
+
+### How to Trigger (Single Source)
+
+For RSS or AI Search sources only: go to **Admin → Data Sources** and click **Scan** on the source row. This runs a scan for just that source. SAM.gov is not per-source — use **Run Pipeline** (or wait for the scheduled run).
 
 ### What Happens After Trigger
 
@@ -410,7 +424,7 @@ Sometimes you need fresh signals immediately — for example, after adding a new
 - SAM.gov: 30–120 seconds
 - AI Search: 20–60 seconds per source
 
-Total time depends on how many sources you have. Check the **Duration** column in the Pipeline Runs table.
+Total time depends on how many sources you have. Check the **Duration** column in the Pipeline Runs table. Use the **⋮** menu on a run to **View logs**, **Cancel** (running/pending only), or **Delete**.
 
 ### API Alternative
 
@@ -477,8 +491,8 @@ RSS items get categories from title keywords. SAM.gov uses its \`type\` field. A
 
 **Important:** When a user updates their profile, existing signals are **not** automatically re-matched. New matches only appear when:
 
-1. **New signals are collected** — Trigger the pipeline to pull new content; it will be matched to the updated profile
-2. **Re-match job** — If you have a "re-match all signals for profile X" job, that would re-run matching for existing signals (check your codebase for this)
+1. **Scan again** — The user can click **Scan again** on their profile page (\`/profile\`) to re-scan existing signals against their updated profile
+2. **New signals are collected** — Run the pipeline to pull new content; it will be matched to the updated profile
 `,
   },
   {
@@ -533,7 +547,8 @@ This profile is converted to text, embedded, and used for matching. Users can ed
 
 - Check that they completed onboarding (profile exists)
 - Check that \`profile_embedding\` is set (profile was embedded)
-- Trigger the pipeline — new signals will be matched
+- Suggest they click **Scan again** on their profile page (re-scans existing signals)
+- Run the pipeline — new signals will be matched
 - Verify they're looking at the right filters (category, region)
 
 **Promote to admin**
@@ -572,31 +587,30 @@ Matching is **signal-driven**, not profile-driven:
 
 ### Options to Get New Matches
 
-#### 1. Trigger the Pipeline (Recommended)
+#### 1. Scan again (Recommended for existing signals)
+
+- The user goes to **Profile** (\`/profile\`)
+- Clicks **Scan again** below the profile form
+- Existing signals are re-scanned against the updated profile
+- New matches appear in the dashboard shortly after
+
+#### 2. Run the Pipeline (For new signals)
 
 - Go to **Admin → Pipeline Runs**
-- Click **Trigger Pipeline**
+- Click **Run Pipeline**
 - New signals are collected → embedded → matched to all profiles (including the updated one)
 - New matches appear in the user's dashboard within minutes
 
-#### 2. Wait for Scheduled Runs
+#### 3. Wait for Scheduled Runs
 
 - RSS: every 6 hours
 - SAM.gov: every 12 hours
 - AI Search: daily 8am
 - New signals from these runs will be matched to the updated profile
 
-#### 3. Re-match Existing Signals (Advanced)
-
-There is no built-in UI for this. To re-match all existing signals against an updated profile, you would need to:
-
-- Emit \`signal/embeddings.ready\` for all signals that already have embeddings (similar to \`backfill-profile-embeddings.mjs\`)
-- Or add an admin endpoint that triggers \`summarize-signals\` for all signals
-- This requires a code change or custom script
-
 ### Summary for Clients
 
-> **For founders:** After updating your profile, new matches will appear as new signals are collected. To get new matches sooner, ask an admin to trigger the pipeline from Admin → Pipeline Runs. That will collect new signals and match them against your updated profile.
+> **For founders:** After updating your profile, click **Scan again** on your profile page to re-scan existing signals. For new signals, new matches will appear as they're collected. To get new signals sooner, ask an admin to run the pipeline from Admin → Pipeline Runs.
 `,
   },
   {
@@ -661,8 +675,9 @@ When a pipeline run fails, the **error_message** field in the Pipeline Runs tabl
 
 1. Go to **Admin → Pipeline Runs**
 2. Filter by status: **failed**
-3. Click a row (or expand) to see full \`error_message\`
-4. Note the **Data Source** — the failure is isolated to that source
+3. Use the **⋮** menu on a run to **View logs** — logs show step-by-step progress and errors
+4. Check the **Error** column for \`error_message\`
+5. Note the **Data Source** — the failure is isolated to that source
 
 ### Disabling a Problematic Source
 
@@ -741,6 +756,7 @@ SAM.gov opportunities are mapped by their \`type\` field:
 | scan-sam-gov | Every 12 hours | Queries SAM.gov for education grants/RFPs |
 | scan-ai-search | Daily 8am | Runs Tavily searches from \`data_sources\` |
 | compile-digest | Sundays 6pm | Builds weekly digests for users with new matches |
+| expire-stale-runs | Every 30 min | Marks runs stuck in running/pending for 30+ minutes as failed |
 
 ### Manual Trigger
 
