@@ -2,7 +2,7 @@
 /**
  * Dev-only script to trigger Inngest pipeline scans.
  * Run with: INNGEST_DEV=1 node scripts/trigger-inngest.mjs
- * Requires: pnpm dev:all (Next.js + Inngest) running
+ * Requires: pnpm dev (Next.js + Inngest) running
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";

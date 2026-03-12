@@ -99,7 +99,7 @@ async function main() {
     }
     console.log(`Triggered summarize-signals for ${signalIds.length} signals. Check Inngest UI at http://localhost:8288`);
   } else if (signalsWithEmbeddings?.length) {
-    console.log(`${signalsWithEmbeddings.length} signals have embeddings. Run with dev server (pnpm dev:all) and INNGEST_DEV=1 to trigger matching.`);
+    console.log(`${signalsWithEmbeddings.length} signals have embeddings. Run with dev server (pnpm dev) and INNGEST_DEV=1 to trigger matching.`);
   }
 
   console.log("Done.");

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import { ReMatchButton } from "@/components/dashboard/re-match-button";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -26,6 +27,12 @@ export default async function ProfilePage() {
         </p>
       </div>
       <ProfileForm profile={profile} />
+      <div className="flex items-center gap-3 pt-2">
+        <ReMatchButton disabled={!profile?.profile_embedding?.length} />
+        <p className="text-sm text-muted-foreground">
+          Scan existing signals against your profile after you make changes.
+        </p>
+      </div>
     </div>
   );
 }

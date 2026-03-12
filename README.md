@@ -43,8 +43,9 @@ cp .env.local.example .env.local
 
 ```bash
 npm run dev          # Next.js on http://localhost:3005
-npm run dev:inngest  # Inngest dev server (background jobs)
-npm run dev:all      # Both servers in parallel
+npm run dev           # Next.js + Inngest dev server (both in parallel)
+npm run dev:next      # Next.js only
+npm run dev:inngest   # Inngest dev server only
 ```
 
 Or use the setup script for a guided first-time setup:
@@ -105,8 +106,8 @@ All tables use Row Level Security (RLS). Key tables:
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start Next.js dev server on port 3005 |
-| `npm run dev:inngest` | Start Inngest dev server for background jobs |
-| `npm run dev:all` | Start both servers in parallel |
+| `npm run dev` | Start Next.js + Inngest dev server (both in parallel) |
+| `npm run dev:inngest` | Start Inngest dev server only |
 
 ### Testing
 

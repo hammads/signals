@@ -5,4 +5,7 @@ export type Events = {
   "signal/embeddings.ready": {
     data: { signalIds: string[] };
   };
+  "profile/re-match.requested": {
+    data: { userId: string };
+  };
 };

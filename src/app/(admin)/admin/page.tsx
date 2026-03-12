@@ -181,8 +181,8 @@ export default async function AdminDashboardPage() {
                   };
                   const ds = r.data_sources ?? null;
                   const label = ds?.name ?? (
-                    r.pipeline_type === "rss" ? "RSS (all sources)" :
-                    r.pipeline_type === "ai_search" ? "AI Search (all sources)" :
+                    r.pipeline_type === "rss" ? "RSS" :
+                    r.pipeline_type === "ai_search" ? "AI Search" :
                     r.pipeline_type === "sam_gov" ? "SAM.gov" : "All sources"
                   );
                   const duration =
