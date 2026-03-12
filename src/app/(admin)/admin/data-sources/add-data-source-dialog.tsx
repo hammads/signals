@@ -23,7 +23,7 @@ import { createDataSource } from "@/lib/supabase/admin-actions";
 import type { DataSourceType } from "@/types/database";
 import type { DataSourceSuggestion } from "@/app/api/admin/data-sources/suggest/route";
 
-const SOURCE_TYPES: DataSourceType[] = ["rss", "api", "scrape", "ai_search"];
+const SUPPORTED_SOURCE_TYPES: DataSourceType[] = ["rss", "ai_search"];
 
 type DialogMode = "manual" | "discover";
 
@@ -54,8 +54,12 @@ export function AddDataSourceDialog() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to fetch suggestions");
-      setSuggestions(data.suggestions ?? []);
-      if (!data.suggestions?.length) {
+      // Only show suggestions for supported types (api/scrape not implemented yet)
+      const supported = (data.suggestions ?? []).filter((s: DataSourceSuggestion) =>
+        SUPPORTED_SOURCE_TYPES.includes(s.source_type)
+      );
+      setSuggestions(supported);
+      if (!supported.length) {
         setError("No suggestions found. Try a different search.");
       }
     } catch (err) {
@@ -224,9 +228,9 @@ export function AddDataSourceDialog() {
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                {SOURCE_TYPES.map((t) => (
+                {SUPPORTED_SOURCE_TYPES.map((t) => (
                   <SelectItem key={t} value={t} className="capitalize">
-                    {t}
+                    {t.replace("_", " ")}
                   </SelectItem>
                 ))}
               </SelectContent>

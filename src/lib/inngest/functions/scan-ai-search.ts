@@ -9,14 +9,22 @@ export const scanAISearch = inngest.createFunction(
     id: "scan-ai-search",
     retries: 2,
   },
-  [{ cron: "0 8 * * *" }, { event: "pipeline/scan.ai-search" }],
-  async ({ step }) => {
+  [
+    { cron: "0 8 * * *" },
+    { event: "pipeline/scan.ai-search" },
+    { event: "pipeline/scan.ai-search.source" },
+  ],
+  async ({ step, event }) => {
     const supabase = await createServiceClient();
+    const dataSourceId = event?.name === "pipeline/scan.ai-search.source"
+      ? (event.data as { data_source_id?: string })?.data_source_id
+      : undefined;
 
     const { data: jobRun } = await supabase
       .from("pipeline_runs")
       .insert({
         data_source_id: null,
+        pipeline_type: "ai_search",
         status: "running",
         signals_found: 0,
         started_at: new Date().toISOString(),
@@ -42,6 +50,16 @@ export const scanAISearch = inngest.createFunction(
     const sources = await step.run(
       "fetch-ai-search-sources",
       async () => {
+        if (dataSourceId) {
+          const { data, error } = await supabase
+            .from("data_sources")
+            .select("*")
+            .eq("id", dataSourceId)
+            .eq("source_type", "ai_search")
+            .single();
+          if (error || !data) return [] as DataSource[];
+          return [data] as DataSource[];
+        }
         const { data, error } = await supabase
           .from("data_sources")
           .select("*")
@@ -116,6 +134,8 @@ export const scanAISearch = inngest.createFunction(
           .from("pipeline_runs")
           .insert({
             data_source_id: source.id,
+            pipeline_type: "ai_search",
+            parent_run_id: jobRun?.id ?? null,
             status: "running",
             signals_found: 0,
             started_at: new Date().toISOString(),

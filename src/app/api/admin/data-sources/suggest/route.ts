@@ -37,7 +37,7 @@ export interface DataSourceSuggestion {
   description?: string;
 }
 
-const VALID_SOURCE_TYPES: DataSourceType[] = ["rss", "api", "scrape", "ai_search"];
+const SUPPORTED_SOURCE_TYPES: DataSourceType[] = ["rss", "ai_search"];
 
 function parseSuggestions(text: string): DataSourceSuggestion[] {
   const suggestions: DataSourceSuggestion[] = [];
@@ -49,7 +49,7 @@ function parseSuggestions(text: string): DataSourceSuggestion[] {
       for (const item of parsed) {
         if (item && typeof item === "object" && "name" in item && typeof (item as { name: unknown }).name === "string") {
           const obj = item as Record<string, unknown>;
-          const sourceType = typeof obj.source_type === "string" && VALID_SOURCE_TYPES.includes(obj.source_type as DataSourceType)
+          const sourceType = typeof obj.source_type === "string" && SUPPORTED_SOURCE_TYPES.includes(obj.source_type as DataSourceType)
             ? (obj.source_type as DataSourceType)
             : "rss";
           const config = obj.config && typeof obj.config === "object" ? (obj.config as Record<string, unknown>) : {};
@@ -96,22 +96,22 @@ The platform scans sources for funding, grants, RFPs, board minutes, policy, and
 When given a topic, search the web for relevant data sources. Return a JSON array of suggestions.
 Each suggestion must have:
 - name: short display name (e.g. "EdWeek RSS")
-- source_type: one of "rss", "api", "scrape", "ai_search"
+- source_type: one of "rss" or "ai_search" (only these are supported)
 - config: object with type-specific fields:
   - rss: { "url": "https://..." } - the RSS/Atom feed URL
-  - api: { "keyword": "...", "naics": "..." } or similar API params
   - ai_search: { "query_template": "search query template" }
 - description: optional one-line description
 
-Prioritize: RSS feeds from education news (EdWeek, EdSurge, etc.), government APIs (SAM.gov, state education depts), 
-and searchable sources for board minutes, grants, RFPs. Only suggest real, verifiable sources.
-Return ONLY a valid JSON array, no other text.`,
+Prioritize: RSS feeds from education news (EdWeek, EdSurge, etc.) and searchable sources for board minutes, grants, RFPs.
+Only suggest real, verifiable sources. Return ONLY a valid JSON array, no other text.`,
       prompt: `Find 5-8 data sources for: "${query}"
 
 Search the web for RSS feeds, APIs, and other public data sources. Return a JSON array.`,
     });
 
-    const suggestions = parseSuggestions(text);
+    const parsed = parseSuggestions(text);
+    // Only return supported types (api/scrape not implemented yet)
+    const suggestions = parsed.filter((s) => SUPPORTED_SOURCE_TYPES.includes(s.source_type));
 
     // Enrich with source URLs from web search when parsing fails
     const sourceUrls: Array<{ url: string; title?: string }> = [];

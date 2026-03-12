@@ -32,14 +32,22 @@ export const scanRSS = inngest.createFunction(
     id: "scan-rss",
     retries: 2,
   },
-  [{ cron: "0 */6 * * *" }, { event: "pipeline/scan.rss" }],
-  async ({ step }) => {
+  [
+    { cron: "0 */6 * * *" },
+    { event: "pipeline/scan.rss" },
+    { event: "pipeline/scan.rss.source" },
+  ],
+  async ({ step, event }) => {
     const supabase = await createServiceClient();
+    const dataSourceId = event?.name === "pipeline/scan.rss.source"
+      ? (event.data as { data_source_id?: string })?.data_source_id
+      : undefined;
 
     const { data: jobRun } = await supabase
       .from("pipeline_runs")
       .insert({
         data_source_id: null,
+        pipeline_type: "rss",
         status: "running",
         signals_found: 0,
         started_at: new Date().toISOString(),
@@ -50,6 +58,16 @@ export const scanRSS = inngest.createFunction(
     const sources = await step.run(
       "fetch-rss-sources",
       async () => {
+        if (dataSourceId) {
+          const { data, error } = await supabase
+            .from("data_sources")
+            .select("*")
+            .eq("id", dataSourceId)
+            .eq("source_type", "rss")
+            .single();
+          if (error || !data) return [] as DataSource[];
+          return [data] as DataSource[];
+        }
         const { data, error } = await supabase
           .from("data_sources")
           .select("*")
@@ -101,6 +119,8 @@ export const scanRSS = inngest.createFunction(
             .from("pipeline_runs")
             .insert({
               data_source_id: source.id,
+              pipeline_type: "rss",
+              parent_run_id: jobRun?.id ?? null,
               status: "running",
               signals_found: 0,
               started_at: new Date().toISOString(),

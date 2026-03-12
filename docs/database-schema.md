@@ -193,6 +193,8 @@ Log of pipeline scan jobs.
 |--------|------|----------|---------|-------------|
 | `id` | uuid | NO | `gen_random_uuid()` | PK |
 | `data_source_id` | uuid | YES | — | FK → `data_sources(id)` ON DELETE SET NULL |
+| `parent_run_id` | uuid | YES | — | FK → `pipeline_runs(id)` ON DELETE SET NULL; links child runs to parent |
+| `pipeline_type` | text | YES | — | `rss` \| `ai_search` \| `sam_gov` |
 | `status` | text | NO | `'pending'` | `pending` \| `running` \| `completed` \| `failed` |
 | `signals_found` | int | NO | `0` | Number of new signals |
 | `error_message` | text | YES | — | Error details if failed |

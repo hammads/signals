@@ -34,6 +34,7 @@ export const scanSamGov = inngest.createFunction(
       .from("pipeline_runs")
       .insert({
         data_source_id: null,
+        pipeline_type: "sam_gov",
         status: "running",
         signals_found: 0,
         started_at: new Date().toISOString(),

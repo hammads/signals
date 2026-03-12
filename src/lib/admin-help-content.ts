@@ -94,12 +94,12 @@ Data sources are the inputs that feed signals into the platform. Each source is 
 
 ### Source Types
 
-| Type | Description | Configuration |
-|------|-------------|---------------|
-| **RSS** | RSS/Atom feeds (EdWeek, EdSurge, etc.) | Feed URL |
-| **API** | REST APIs (e.g., SAM.gov) | API endpoint, auth |
-| **Scrape** | Web scraping (future) | URL, selectors |
-| **AI Search** | Tavily AI-powered search | Query template |
+| Type | Description | Status |
+|------|-------------|--------|
+| **RSS** | RSS/Atom feeds (EdWeek, EdSurge, etc.) | Supported |
+| **AI Search** | Tavily AI-powered search | Supported |
+| **API** | REST APIs | Coming soon |
+| **Scrape** | Web scraping | Coming soon |
 
 ### Adding a Data Source
 
@@ -110,7 +110,7 @@ Data sources are the inputs that feed signals into the platform. Each source is 
 #### Manual Add
 
 - **Name** — A descriptive label (e.g., "EdWeek RSS")
-- **Type** — Select rss, api, scrape, or ai_search
+- **Type** — Select **RSS** or **AI Search** (API and Scrape coming soon)
 - **RSS URL** (for RSS) — The full feed URL, e.g. \`https://www.edweek.org/feed\`
 - **Query template** (for AI Search) — A search query, e.g. "school board minutes technology budget 2026"
 - **Scan frequency (hours)** — How often to scan (default 24)

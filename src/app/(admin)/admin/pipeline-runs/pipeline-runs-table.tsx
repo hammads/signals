@@ -30,12 +30,29 @@ const STATUS_COLORS: Record<PipelineRunStatus, string> = {
   failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
+function getDataSourceLabel(
+  ds: { name: string } | null,
+  pipelineType: string | null
+): string {
+  if (ds?.name) return ds.name;
+  switch (pipelineType) {
+    case "rss":
+      return "RSS (all sources)";
+    case "ai_search":
+      return "AI Search (all sources)";
+    case "sam_gov":
+      return "SAM.gov";
+    default:
+      return "All sources";
+  }
+}
+
 interface PipelineRunWithSource extends PipelineRun {
   data_sources: { name: string } | null;
 }
 
 interface PipelineRunsTableProps {
-  runs: PipelineRunWithSource[];
+  runs: Array<{ run: PipelineRunWithSource; isChild: boolean }>;
   currentPage: number;
   totalPages: number;
   statusFilter: string;
@@ -101,8 +118,12 @@ export function PipelineRunsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              runs.map((run) => {
-                const ds = run.data_sources;
+              runs.map(({ run, isChild }, index) => {
+                const isFirstInGroup = !isChild && (index === 0 || runs[index - 1]?.isChild);
+                const label = getDataSourceLabel(
+                  run.data_sources,
+                  run.pipeline_type ?? null
+                );
                 const duration =
                   run.started_at && run.completed_at
                     ? Math.round(
@@ -112,10 +133,26 @@ export function PipelineRunsTable({
                       )
                     : null;
                 return (
-                  <TableRow key={run.id}>
-                    <TableCell className="font-medium">
-                      {ds?.name ?? (
-                        <span className="text-muted-foreground">—</span>
+                  <TableRow
+                    key={run.id}
+                    className={cn(
+                      isChild && "bg-muted/50 hover:bg-muted/60",
+                      isFirstInGroup && index > 0 && "border-t-2 border-t-border"
+                    )}
+                  >
+                    <TableCell
+                      className={cn(
+                        "font-medium",
+                        isChild && "pl-12"
+                      )}
+                    >
+                      {isChild && (
+                        <span className="text-muted-foreground mr-2">↳</span>
+                      )}
+                      {run.data_sources ? (
+                        label
+                      ) : (
+                        <span className="text-muted-foreground">{label}</span>
                       )}
                     </TableCell>
                     <TableCell>

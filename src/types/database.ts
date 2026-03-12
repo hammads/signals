@@ -104,9 +104,13 @@ export interface DataSource {
   created_at: string;
 }
 
+export type PipelineType = "rss" | "ai_search" | "sam_gov";
+
 export interface PipelineRun {
   id: string;
   data_source_id: string | null;
+  parent_run_id: string | null;
+  pipeline_type: PipelineType | null;
   status: PipelineRunStatus;
   signals_found: number;
   error_message: string | null;

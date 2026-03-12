@@ -64,6 +64,7 @@ export default async function AdminDashboardPage() {
         started_at,
         completed_at,
         created_at,
+        pipeline_type,
         data_sources(name)
       `
       )
@@ -174,8 +175,16 @@ export default async function AdminDashboardPage() {
                 </TableRow>
               ) : (
                 (recentRuns ?? []).map((run) => {
-                  const r = run as unknown as PipelineRun & { data_sources?: { name: string } | null };
+                  const r = run as unknown as PipelineRun & {
+                    data_sources?: { name: string } | null;
+                    pipeline_type?: string | null;
+                  };
                   const ds = r.data_sources ?? null;
+                  const label = ds?.name ?? (
+                    r.pipeline_type === "rss" ? "RSS (all sources)" :
+                    r.pipeline_type === "ai_search" ? "AI Search (all sources)" :
+                    r.pipeline_type === "sam_gov" ? "SAM.gov" : "All sources"
+                  );
                   const duration =
                     r.started_at && r.completed_at
                       ? Math.round(
@@ -187,8 +196,10 @@ export default async function AdminDashboardPage() {
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
-                        {ds?.name ?? (
-                          <span className="text-muted-foreground">—</span>
+                        {ds ? (
+                          label
+                        ) : (
+                          <span className="text-muted-foreground">{label}</span>
                         )}
                       </TableCell>
                       <TableCell>
