@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Satellite,
+  BookOpen,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/database";
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { href: "/digests", label: "Digests", icon: FileStack },
   { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/help", label: "Help", icon: BookOpen },
 ] as const;
 
 interface DashboardSidebarProps {
@@ -67,7 +69,8 @@ function SidebarContent({ user, profile }: DashboardSidebarProps) {
 
       <nav className="flex-1 space-y-1 p-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive =
+            pathname === href || (href === "/help" && pathname?.startsWith("/help"));
           return (
             <Link
               key={href}
