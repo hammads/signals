@@ -14,7 +14,6 @@ import {
   USER_HELP_ARTICLES,
   USER_HELP_CATEGORIES,
   getUserArticlesByCategory,
-  getUserCategoryLabel,
 } from "@/lib/user-help-content";
 import type { UserHelpCategory } from "@/lib/user-help-content";
 

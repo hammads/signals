@@ -15,7 +15,7 @@ try {
     const m = line.match(/^([^#=]+)=(.*)$/);
     if (m) process.env[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, "");
   }
-} catch (_) {}
+} catch {}
 
 process.env.INNGEST_DEV = process.env.INNGEST_DEV || "1";
 

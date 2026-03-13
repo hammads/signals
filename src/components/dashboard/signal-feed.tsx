@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { SignalCard } from "@/components/shared/signal-card";
@@ -125,8 +125,7 @@ export function SignalFeed({
   const isEmpty = validMatches.length === 0;
 
   // Defer Select to client-only to avoid Radix useId hydration mismatch (aria-controls)
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   return (
     <div className="space-y-6">

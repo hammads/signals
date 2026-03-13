@@ -15,7 +15,6 @@ import {
   HELP_ARTICLES,
   HELP_CATEGORIES,
   getArticlesByCategory,
-  getCategoryLabel,
 } from "@/lib/admin-help-content";
 import type { HelpCategory } from "@/lib/admin-help-content";
 

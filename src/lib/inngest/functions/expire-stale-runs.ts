@@ -17,7 +17,7 @@ export const expireStaleRuns = inngest.createFunction(
       thresholdMinutes: STALE_THRESHOLD_MINUTES,
     });
 
-    const { count, error } = await step.run("mark-stale-runs-failed", async () => {
+    const { count } = await step.run("mark-stale-runs-failed", async () => {
       const supabase = await createServiceClient();
 
       const { data, error } = await supabase
@@ -35,11 +35,6 @@ export const expireStaleRuns = inngest.createFunction(
 
       return { count: data?.length ?? 0 };
     });
-
-    if (error) {
-      logger.error("[expire-stale-runs] Failed to expire stale runs", { error });
-      return { expired: 0 };
-    }
 
     if (count > 0) {
       logger.warn("[expire-stale-runs] Expired stale pipeline runs", { count });
