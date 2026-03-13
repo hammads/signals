@@ -39,7 +39,7 @@ export default async function PipelineRunsPage({
 
   const rootIds = (roots ?? []).map((r) => r.id);
 
-  type RunRow = (typeof roots)[number];
+  type RunRow = NonNullable<typeof roots>[number];
 
   // Fetch children: explicit (parent_run_id set) or legacy (data_source_id set, created near a root)
   const childrenByParent: Record<string, RunRow[]> = {};
