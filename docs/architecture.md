@@ -19,10 +19,13 @@ A Next.js application that ingests education-sector signals (grants, RFPs, news,
 │  scan-rss / scan-sam-gov / scan-ai-search                                        │
 │         │                                                                        │
 │         ▼  signal/batch.collected                                                │
+│  enrich-signal-districts  (extract + resolve NCES LEAs)                          │
+│         │                                                                        │
+│         ▼  signal/districts.enriched  (always fires, even on failure)           │
 │  generate-embeddings  ─────────────────────────────────────────────────────────► │
 │         │                                                                        │
 │         ▼  signal/embeddings.ready                                                │
-│  summarize-signals (vector match + AI insights)                                  │
+│  summarize-signals (vector match + AI insights + district context)               │
 │                                                                                  │
 │  compile-digest (cron: Sundays 6pm)                                              │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -66,26 +69,38 @@ A Next.js application that ingests education-sector signals (grants, RFPs, news,
   - `scan-ai-search`: Uses AI search for board minutes, competitor news, etc.
 - **Output**: New rows in `signals` table; emits `signal/batch.collected`
 
-### 2. Embedding Generation
+### 2. District Enrichment
 
-- **Trigger**: `signal/batch.collected` event
+- **Trigger**: `signal/batch.collected` event (same trigger as before, runs in parallel with no dependency on embeddings)
+- **Process** (`enrich-signal-districts` Inngest function):
+  1. **Extract** — calls `gpt-4o-mini` via `generateObject` with a strict Zod schema to identify up to 8 K-12 district mentions (name + state) in the signal text.
+  2. **Resolve** — for each mention, calls the `match_lea_directory` Supabase RPC (trigram similarity via `pg_trgm`) to find the best NCES LEA match; only accepts rows with `similarity >= 0.35`.
+  3. **Persist** — idempotently (delete + insert) writes to `signal_districts`; per-signal failures are logged and swallowed.
+- **Output**: Always emits `signal/districts.enriched` with the original `signalIds` so the downstream pipeline is never blocked.
+- **Source**: `src/lib/districts/enrich.ts`, `src/lib/inngest/functions/enrich-signal-districts.ts`
+
+### 3. Embedding Generation
+
+- **Trigger**: `signal/districts.enriched` event
 - **Process**: For each new signal without an embedding:
-  - Builds text from title, content, category, region
+  - Loads resolved district labels from the `signal_districts_expanded` view
+  - Builds text from title, content, category, region, and `Districts: ...` line when districts are present
   - Calls OpenAI `text-embedding-3-small` (1536 dimensions)
   - Stores vector in `signals.content_embedding`
 - **Output**: Emits `signal/embeddings.ready`
 
-### 3. Signal Matching
+### 4. Signal Matching
 
 - **Trigger**: `signal/embeddings.ready` event
 - **Process**:
   - Calls `match_signal_to_profiles(signal_embedding)` (pgvector cosine similarity)
+  - Loads resolved district labels from `signal_districts_expanded` for the signal
   - For each matching profile above threshold (0.3):
-    - AI generates `relevance_score`, `why_it_matters`, `action_suggestion`
+    - AI generates `relevance_score`, `why_it_matters`, `action_suggestion` — the prompt includes a `Resolved districts (NCES): ...` line to improve bellwether/region reasoning
     - If `relevance_score >= 0.4`, inserts `signal_matches` row
-- **Output**: Personalized matches visible in user dashboard
+- **Output**: Personalized matches visible in user dashboard (with district chips)
 
-### 4. Digest Compilation
+### 5. Digest Compilation
 
 - **Trigger**: Cron `0 18 * * 0` (Sundays 6pm)
 - **Process**:

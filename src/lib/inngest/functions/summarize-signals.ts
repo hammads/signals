@@ -41,6 +41,15 @@ export const summarizeSignals = inngest.createFunction(
             : null;
         if (!embeddingStr) return;
 
+        // Load resolved district labels for this signal
+        const { data: districtRows } = await supabase
+          .from("signal_districts_expanded")
+          .select("district_label")
+          .eq("signal_id", signalId);
+        const districtLabels = (districtRows ?? []).map(
+          (r: { district_label: string }) => r.district_label
+        );
+
         const { data: matches } = await supabase.rpc("match_signal_to_profiles", {
           signal_embedding: embeddingStr,
           match_threshold: 0.3,
@@ -61,7 +70,7 @@ export const summarizeSignals = inngest.createFunction(
           const result = await generateObject({
             model: openai("gpt-4o-mini"),
             schema: signalMatchInsightSchema,
-            prompt: buildMatchPrompt(signal as Signal, profile as SignalProfile),
+            prompt: buildMatchPrompt(signal as Signal, profile as SignalProfile, districtLabels),
           });
 
           const insight = result.object;

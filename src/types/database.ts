@@ -16,7 +16,9 @@ export type SignalCategory =
   | "board_minutes"
   | "news"
   | "competitor"
-  | "policy";
+  | "policy"
+  | "district_lookalike"
+  | "icp_finder";
 
 export type DataSourceType = "rss" | "api" | "scrape" | "ai_search";
 
@@ -65,6 +67,30 @@ export interface Signal {
   content_embedding: number[] | null;
   metadata: Json;
   created_at: string;
+}
+
+export interface LeaDirectory {
+  lea_id: string;
+  state: string;
+  name: string;
+}
+
+export interface SignalDistrict {
+  id: string;
+  signal_id: string;
+  lea_id: string;
+  extracted_text: string | null;
+  match_score: number | null;
+}
+
+export interface SignalDistrictExpanded extends SignalDistrict {
+  district_name: string;
+  district_state: string;
+  district_label: string;
+}
+
+export interface SignalWithDistricts extends Signal {
+  signal_districts: SignalDistrictExpanded[];
 }
 
 export interface SignalMatch {
@@ -158,6 +184,16 @@ export interface Database {
         Row: PipelineRun;
         Insert: Partial<PipelineRun>;
         Update: Partial<PipelineRun>;
+      };
+      lea_directory: {
+        Row: LeaDirectory;
+        Insert: LeaDirectory;
+        Update: Partial<LeaDirectory>;
+      };
+      signal_districts: {
+        Row: SignalDistrict;
+        Insert: Partial<SignalDistrict> & { signal_id: string; lea_id: string };
+        Update: Partial<SignalDistrict>;
       };
     };
   };

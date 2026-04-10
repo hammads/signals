@@ -12,16 +12,28 @@ export default function PublicLayout({
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="text-lg font-bold tracking-tight text-foreground transition-colors hover:text-primary"
+            className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground transition-colors hover:text-primary"
           >
-            AI Signals Radar
+            <span className="text-primary">Pivot</span>
+            <span>2Flow</span>
           </Link>
+          <div className="hidden items-center gap-6 sm:flex">
+            <Link href="#services" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              Services
+            </Link>
+            <Link href="#signals-radar" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              Signals Radar
+            </Link>
+            <Link href="#about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              About
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
+            <Button variant="ghost" asChild className="hidden sm:inline-flex">
+              <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild>
-              <Link href="/signup">Sign Up</Link>
+              <Link href="/signup">Get Started</Link>
             </Button>
           </div>
         </nav>

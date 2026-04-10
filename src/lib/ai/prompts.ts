@@ -4,8 +4,13 @@ import type { SignalMatchWithSignal } from "@/types/database";
 
 /**
  * Builds the prompt for AI to assess signal-to-profile match relevance.
+ * Accepts optional resolved NCES district labels to improve bellwether/region matching.
  */
-export function buildMatchPrompt(signal: Signal, profile: SignalProfile): string {
+export function buildMatchPrompt(
+  signal: Signal,
+  profile: SignalProfile,
+  districtLabels?: string[]
+): string {
   const profileContext = [
     profile.keywords?.length ? `Keywords: ${profile.keywords.join(", ")}` : null,
     profile.problem_areas?.length ? `Problem areas: ${profile.problem_areas.join(", ")}` : null,
@@ -23,6 +28,7 @@ export function buildMatchPrompt(signal: Signal, profile: SignalProfile): string
     `Title: ${signal.title}`,
     signal.signal_category ? `Category: ${signal.signal_category}` : null,
     signal.region ? `Region: ${signal.region}` : null,
+    districtLabels?.length ? `Resolved districts (NCES): ${districtLabels.join(", ")}` : null,
     signal.raw_content ? `Content: ${signal.raw_content.slice(0, 2000)}${signal.raw_content.length > 2000 ? "..." : ""}` : null,
   ]
     .filter(Boolean)

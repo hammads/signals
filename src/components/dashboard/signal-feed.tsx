@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Radio, ChevronLeft, ChevronRight } from "lucide-react";
-import type { SignalMatchWithSignal, SignalCategory } from "@/types/database";
+import type { SignalMatchWithSignal, SignalCategory, SignalDistrictExpanded } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { US_STATES } from "@/types/schemas";
 
@@ -28,6 +28,8 @@ const CATEGORY_PILLS: { value: "" | SignalCategory; label: string }[] = [
   { value: "news", label: "News" },
   { value: "competitor", label: "Competitor" },
   { value: "policy", label: "Policy" },
+  { value: "district_lookalike", label: "Look-alike District" },
+  { value: "icp_finder", label: "ICP Contact" },
 ];
 
 export interface SignalFeedProps {
@@ -207,10 +209,15 @@ export function SignalFeed({
           />
         ) : (
           <div className="space-y-4">
-            {validMatches.map((match) => (
+            {validMatches.map((match) => {
+              const signal = match.signal as typeof match.signal & {
+                signal_districts?: SignalDistrictExpanded[];
+              };
+              return (
                 <SignalCard
                   key={match.id}
-                  signal={match.signal}
+                  signal={signal}
+                  districts={signal.signal_districts}
                   relevance_score={match.relevance_score}
                   why_it_matters={match.why_it_matters}
                   action_suggestion={match.action_suggestion}
@@ -221,7 +228,8 @@ export function SignalFeed({
                   }
                   onMarkRead={() => handleMarkRead(match.id)}
                 />
-              ))}
+              );
+            })}
           </div>
         )}
 

@@ -40,6 +40,26 @@ INSERT INTO public.pipeline_runs (data_source_id, status, signals_found, started
   ('a1000000-0000-0000-0000-000000000005', 'completed', 2, '2026-02-17T08:00:00Z', '2026-02-17T08:02:00Z'),
   ('a1000000-0000-0000-0000-000000000001', 'failed', 0, '2026-02-16T18:00:00Z', '2026-02-16T18:00:30Z');
 
+-- Sample LEAs for dev/tests (subset of NCES CCD data)
+-- Full import: run scripts/import-nces-lea.mjs
+INSERT INTO public.lea_directory (lea_id, state, name) VALUES
+  ('4800570', 'TX', 'Austin Independent School District'),
+  ('4815120', 'TX', 'Houston Independent School District'),
+  ('4812870', 'TX', 'Dallas Independent School District'),
+  ('1709930', 'IL', 'Chicago Public Schools'),
+  ('0612870', 'CA', 'Los Angeles Unified School District'),
+  ('0623820', 'CA', 'San Diego Unified School District'),
+  ('0800060', 'CO', 'Denver County School District 1'),
+  ('1200390', 'FL', 'Miami-Dade County School District'),
+  ('1200180', 'FL', 'Broward County School District'),
+  ('5100870', 'VA', 'Fairfax County School District'),
+  ('3600077', 'NY', 'New York City Geographic District  1'),
+  ('3400480', 'NJ', 'Newark City School District'),
+  ('4200390', 'PA', 'The School District of Philadelphia'),
+  ('2600009', 'MI', 'Detroit City School District'),
+  ('3900072', 'OH', 'Cleveland Metropolitan School District')
+ON CONFLICT (lea_id) DO NOTHING;
+
 -- NOTE: To seed signal_matches and digests, you need a real user.
 -- After creating a user and their signal_profile, run:
 --

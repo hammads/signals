@@ -45,6 +45,16 @@ export const SIGNAL_CATEGORY_CONFIG: Record<
     color: "text-rose-700",
     bgColor: "bg-rose-50 border-rose-200",
   },
+  district_lookalike: {
+    label: "Look-alike District",
+    color: "text-indigo-700",
+    bgColor: "bg-indigo-50 border-indigo-200",
+  },
+  icp_finder: {
+    label: "ICP Contact",
+    color: "text-teal-700",
+    bgColor: "bg-teal-50 border-teal-200",
+  },
 };
 
 export function truncateText(text: string, maxLength: number): string {
@@ -97,6 +107,7 @@ export function buildSignalEmbeddingText(signal: {
   raw_content?: string | null;
   signal_category?: string | null;
   region?: string | null;
+  districtLabels?: string[];
 }): string {
   const parts: string[] = [];
 
@@ -105,6 +116,9 @@ export function buildSignalEmbeddingText(signal: {
   }
   if (signal.region) {
     parts.push(`Region: ${signal.region}`);
+  }
+  if (signal.districtLabels?.length) {
+    parts.push(`Districts: ${signal.districtLabels.join(", ")}`);
   }
   parts.push(signal.title);
   if (signal.raw_content) {

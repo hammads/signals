@@ -25,18 +25,23 @@ export default async function DashboardPage({
   const page = Math.max(1, Number(params.page) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
+  const hasSignalFilter = Boolean(category || region);
+  const selectStr = hasSignalFilter
+    ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))"
+    : "*, signal:signals(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))";
+
   let query = supabase
     .from("signal_matches")
-    .select("*, signal:signals(*)", { count: "exact" })
+    .select(selectStr, { count: "exact" })
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (category) {
-    query = query.eq("signal.signal_category", category);
+    query = query.eq("signals.signal_category", category);
   }
   if (region) {
-    query = query.eq("signal.region", region);
+    query = query.eq("signals.region", region);
   }
 
   const { data: matches, error, count } = await query;

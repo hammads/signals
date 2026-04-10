@@ -30,13 +30,19 @@ PostgreSQL schema for AI Signals Radar, hosted on Supabase. Uses **pgvector** fo
 │ signals                                                                        │
 │ (raw ingested content, content_embedding)                                      │
 └───────────────────────────────────────────────────────────────────────────────┘
-        │
-        │ N:M
-        ▼
-┌─────────────────────┐
-│ signal_matches      │
-│ (relevance, insights)│
-└─────────────────────┘
+        │                  │
+        │ N:M              │ 1:N
+        ▼                  ▼
+┌─────────────────────┐  ┌─────────────────────┐
+│ signal_matches      │  │ signal_districts     │
+│ (relevance, insights)│  │ (NCES LEA links)    │
+└─────────────────────┘  └──────────┬──────────┘
+                                     │ N:1
+                                     ▼
+                           ┌─────────────────────┐
+                           │ lea_directory        │
+                           │ (NCES reference)     │
+                           └─────────────────────┘
 
 ┌─────────────────────┐         ┌─────────────────────┐
 │ data_sources        │────────►│ pipeline_runs       │
@@ -242,3 +248,55 @@ Vector similarity search to find profiles that match a signal.
 
 ### User roles
 `founder`, `admin`
+
+---
+
+## District Enrichment Tables
+
+### `lea_directory`
+
+Reference table of US Local Education Agencies (LEAs) sourced from NCES CCD. Populated by `scripts/import-nces-lea.mjs`; dev seeds in `supabase/seed.sql`.
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `lea_id` | text | NO | PK — 7-digit NCES LEAID (e.g. `"4800570"`) |
+| `state` | text | NO | 2-letter uppercase state code (e.g. `"TX"`) |
+| `name` | text | NO | Official LEA name (e.g. `"Austin Independent School District"`) |
+
+**Indexes**: `(state)`, GIN trigram on `name` (for fuzzy matching).  
+**RLS**: `SELECT` for `authenticated`. Writes via service role only.
+
+---
+
+### `signal_districts`
+
+Links a signal to one or more resolved NCES LEAs. Populated by the `enrich-signal-districts` Inngest function.
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | uuid | NO | PK |
+| `signal_id` | uuid | NO | FK → `signals(id)` ON DELETE CASCADE |
+| `lea_id` | text | NO | FK → `lea_directory(lea_id)` |
+| `extracted_text` | text | YES | Raw district name as extracted by the LLM |
+| `match_score` | float | YES | Trigram similarity score (0–1) |
+
+**Unique**: `(signal_id, lea_id)`.  
+**Index**: `signal_id`.  
+**RLS**: `SELECT` for `authenticated`. Writes via service role only.
+
+---
+
+### `signal_districts_expanded` (view)
+
+Convenience view joining `signal_districts` with `lea_directory` — returns `district_name`, `district_state`, and `district_label` (e.g. `"Austin ISD (TX)"`). Used in embedding generation, match prompts, and the API/dashboard.
+
+---
+
+### `match_lea_directory` (RPC)
+
+```sql
+match_lea_directory(p_state text, p_query text, p_limit int DEFAULT 5)
+RETURNS TABLE (lea_id text, name text, state text, score float)
+```
+
+Returns top-N LEAs for a given state filtered by trigram similarity (`similarity() > 0.1`), ordered by score descending. Called by the enrichment resolver with `p_limit = 1` to find the best match.

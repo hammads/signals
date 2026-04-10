@@ -10,9 +10,9 @@ export const generateEmbeddings = inngest.createFunction(
     id: "generate-embeddings",
     retries: 2,
   },
-  { event: "signal/batch.collected" },
+  { event: "signal/districts.enriched" },
   async ({ event, step }) => {
-    const { signalIds } = event.data as Events["signal/batch.collected"]["data"];
+    const { signalIds } = event.data as Events["signal/districts.enriched"]["data"];
     if (!signalIds?.length) return { processed: 0, signalIds: [] };
 
     const supabase = await createServiceClient();
@@ -33,11 +33,22 @@ export const generateEmbeddings = inngest.createFunction(
 
     for (const signal of signals) {
       await step.run(`embed-signal-${signal.id}`, async () => {
+        // Load resolved district labels for richer embedding text
+        const { data: districtRows } = await supabase
+          .from("signal_districts_expanded")
+          .select("district_label")
+          .eq("signal_id", signal.id);
+
+        const districtLabels = (districtRows ?? []).map(
+          (r: { district_label: string }) => r.district_label
+        );
+
         const text = buildSignalEmbeddingText({
           title: signal.title,
           raw_content: signal.raw_content,
           signal_category: signal.signal_category,
           region: signal.region,
+          districtLabels,
         });
         const { embedding } = await embed({
           model: openai.embedding("text-embedding-3-small"),

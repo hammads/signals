@@ -5,9 +5,10 @@ import {
   BookmarkCheck,
   ExternalLink,
   Lightbulb,
+  MapPin,
   Target,
 } from "lucide-react";
-import type { Signal, SignalCategory } from "@/types/database";
+import type { Signal, SignalCategory, SignalDistrictExpanded } from "@/types/database";
 import { cn, relativeDate, SIGNAL_CATEGORY_CONFIG } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ const CATEGORY_LABELS: Record<SignalCategory, string> = {
   news: "News",
   competitor: "Competitor",
   policy: "Policy",
+  district_lookalike: "Look-alike District",
+  icp_finder: "ICP Contact",
 };
 
 export interface SignalCardProps {
@@ -31,6 +34,7 @@ export interface SignalCardProps {
     Signal,
     "title" | "source_url" | "signal_category" | "region" | "published_at" | "created_at"
   >;
+  districts?: Pick<SignalDistrictExpanded, "lea_id" | "district_name" | "district_state" | "district_label">[];
   relevance_score: number | null;
   why_it_matters: string | null;
   action_suggestion: string | null;
@@ -42,6 +46,7 @@ export interface SignalCardProps {
 
 export function SignalCard({
   signal,
+  districts,
   relevance_score,
   why_it_matters,
   action_suggestion,
@@ -90,6 +95,21 @@ export function SignalCard({
               </Badge>
             )}
           </div>
+
+          {districts && districts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <MapPin className="size-3 shrink-0 text-muted-foreground" />
+              {districts.map((d) => (
+                <Badge
+                  key={d.lea_id}
+                  variant="outline"
+                  className="border-slate-200 bg-slate-50 font-normal text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  {d.district_label}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           <h3 className="text-base font-semibold leading-tight">
             <a

@@ -5,9 +5,21 @@ interface StepMock {
   sendEvent: ReturnType<typeof vi.fn>;
 }
 
+interface HandlerContext {
+  step: StepMock;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  event?: any;
+  logger?: {
+    info: ReturnType<typeof vi.fn>;
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+    debug: ReturnType<typeof vi.fn>;
+  };
+}
+
 const { mockSupabase, handlers } = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handlers: Record<string, (ctx: { step: StepMock; event?: any }) => Promise<unknown>> = {};
+  const handlers: Record<string, (ctx: HandlerContext) => Promise<unknown>> = {};
   const chain: Record<string, unknown> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.insert = vi.fn().mockReturnValue(chain);
@@ -36,7 +48,7 @@ vi.mock("@/lib/inngest/client", () => ({
       (
         config: { id: string },
         _trigger: unknown,
-        handler: (ctx: { step: StepMock }) => Promise<unknown>
+        handler: (ctx: HandlerContext) => Promise<unknown>
       ) => {
         handlers[config.id] = handler;
         return { id: config.id };
@@ -73,6 +85,15 @@ function createMockStep(): StepMock {
       return result instanceof Promise ? result : Promise.resolve(result);
     }),
     sendEvent: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+function mockLogger() {
+  return {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
   };
 }
 
@@ -135,7 +156,7 @@ describe("Inngest SAM.gov Scanner", () => {
     delete process.env.SAM_GOV_API_KEY;
     const mockStep = createMockStep();
     const handler = handlers["scan-sam-gov"];
-    const result = await handler({ step: mockStep });
+    const result = await handler({ step: mockStep, logger: mockLogger() });
     expect(result).toMatchObject({ skipped: true, reason: expect.any(String), signalIds: [] });
     process.env.SAM_GOV_API_KEY = "test-key";
   });
@@ -156,7 +177,7 @@ describe("Inngest AI Search Scanner", () => {
     delete process.env.TAVILY_API_KEY;
     const mockStep = createMockStep();
     const handler = handlers["scan-ai-search"];
-    const result = await handler({ step: mockStep });
+    const result = await handler({ step: mockStep, logger: mockLogger() });
     expect(result).toMatchObject({ error: expect.any(String), signalIds: [] });
     process.env.TAVILY_API_KEY = "test-key";
   });

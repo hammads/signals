@@ -117,10 +117,32 @@ describe("buildSignalEmbeddingText", () => {
     const contentPart = result.split(". ").pop() ?? "";
     expect(contentPart.length).toBe(6000);
   });
+
+  it("appends Districts line when districtLabels provided", () => {
+    const signal = {
+      title: "Test RFP",
+      raw_content: "Some content",
+      signal_category: "rfp",
+      region: "TX",
+      districtLabels: ["Austin ISD (TX)", "Houston ISD (TX)"],
+    };
+    const result = buildSignalEmbeddingText(signal);
+    expect(result).toContain("Districts: Austin ISD (TX), Houston ISD (TX)");
+  });
+
+  it("does not append Districts line when districtLabels is empty", () => {
+    const signal = {
+      title: "Test RFP",
+      raw_content: "Some content",
+      districtLabels: [],
+    };
+    const result = buildSignalEmbeddingText(signal);
+    expect(result).not.toContain("Districts:");
+  });
 });
 
 describe("SIGNAL_CATEGORY_CONFIG", () => {
-  it("has entries for all 6 categories", () => {
+  it("has entries for all 8 categories", () => {
     const categories = [
       "grant",
       "rfp",
@@ -128,6 +150,8 @@ describe("SIGNAL_CATEGORY_CONFIG", () => {
       "news",
       "competitor",
       "policy",
+      "district_lookalike",
+      "icp_finder",
     ] as const;
     expect(Object.keys(SIGNAL_CATEGORY_CONFIG).sort()).toEqual(
       [...categories].sort()
