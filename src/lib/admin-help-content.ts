@@ -482,7 +482,7 @@ RSS items get categories from title keywords. SAM.gov uses its \`type\` field. A
 ### Matching Logic
 
 - Each signal gets an embedding
-- User profiles have embeddings built from their keywords, problem areas, regions, etc.
+- User profiles have embeddings built from their keywords, primary and solution categories, regions, etc.
 - The system computes similarity between signal and profile embeddings
 - Matches above a threshold are created and shown to the user
 - AI generates "Why it matters" and "Action suggestion" for each match
@@ -527,8 +527,8 @@ Only admins can change roles (if your UI supports it). Role is stored in \`profi
 Each user has a **signal profile** built during onboarding:
 
 - Keywords (e.g., "assessment", "literacy")
-- Problem areas (e.g., "student engagement")
-- Solution categories (e.g., "formative assessment")
+- Primary categories (e.g., Curriculum & Instruction)
+- Solution categories (e.g., "student engagement")
 - Funding sources (e.g., "Title I", "ESSER")
 - Competitor names
 - Target regions (e.g., "TX", "CA")
@@ -571,7 +571,7 @@ Users often ask: "I updated my profile — when will I see new matches?" This ar
 
 1. User saves changes on **/profile**
 2. System updates profile fields in the database
-3. Profile text is regenerated (keywords + problem areas + regions + etc.)
+3. Profile text is regenerated (keywords + primary/solution categories + regions + etc.)
 4. New embedding is computed from the updated text
 5. \`profile_embedding\` is saved
 

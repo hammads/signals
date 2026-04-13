@@ -70,7 +70,7 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                     control={form.control}
                     name="district_types"
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2 space-y-0">
+                      <FormItem className="flex flex-row items-center gap-2">
                         <FormControl>
                           <Checkbox
                             checked={(field.value?.length ?? 0) === 0}
@@ -93,7 +93,7 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                       render={({ field }) => {
                         const isAll = (field.value?.length ?? 0) === 0;
                         return (
-                          <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormItem className="flex flex-row items-center gap-2">
                             <FormControl>
                               <Checkbox
                                 checked={
@@ -173,7 +173,7 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                     control={form.control}
                     name="target_regions"
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2 space-y-0">
+                      <FormItem className="flex flex-row items-center gap-2">
                         <FormControl>
                           <Checkbox
                             checked={(field.value?.length ?? 0) === 0}
@@ -196,7 +196,7 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                       render={({ field }) => {
                         const isAll = (field.value?.length ?? 0) === 0;
                         return (
-                          <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormItem className="flex flex-row items-center gap-2">
                             <FormControl>
                               <Checkbox
                                 checked={

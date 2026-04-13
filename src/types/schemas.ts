@@ -60,6 +60,40 @@ export const FUNDING_SOURCES = [
   "Other",
 ] as const;
 
+/** One-line context for users unfamiliar with federal / common K–12 funding streams. */
+export const FUNDING_SOURCE_DESCRIPTIONS: Record<
+  (typeof FUNDING_SOURCES)[number],
+  string
+> = {
+  "Title I":
+    "Federal aid for schools serving high concentrations of students from low-income families.",
+  "Title II":
+    "Funds for recruiting, preparing, and developing teachers and school leaders.",
+  "Title III":
+    "Support for English learners and immigrant students (language instruction and related services).",
+  "Title IV":
+    "Flexible grants for a well-rounded education, safe and healthy students, and effective use of technology.",
+  IDEA:
+    "Federal special education funding for eligible students with disabilities.",
+  "E-Rate":
+    "Discounts on internet access and telecommunications for schools and libraries.",
+  ESSER:
+    "Federal emergency relief for K–12 (often COVID-era) response, recovery, and safe reopening.",
+  SRSA:
+    "Extra formula aid for small, rural districts under the Rural Education Achievement Program.",
+  RLIS:
+    "Supplemental rural funding for high-poverty districts under the Rural Education Achievement Program.",
+  "21st Century":
+    "Grants for after-school, before-school, and summer learning and enrichment programs.",
+  "McKinney-Vento":
+    "Support so children and youth experiencing homelessness can enroll, attend, and succeed in school.",
+  Perkins:
+    "Federal career and technical education (CTE) funding for secondary and postsecondary programs.",
+  "Head Start":
+    "Early childhood education, health, and family services for children from low-income families.",
+  Other: "Any other funding stream not listed above.",
+};
+
 export const SOLUTION_CATEGORIES = [
   "Curriculum & Instruction",
   "Assessment & Data",
@@ -76,8 +110,8 @@ export const SOLUTION_CATEGORIES = [
 
 export const onboardingStep1Schema = z.object({
   company_name: z.string().min(1, "Company name is required"),
-  solution_categories: z.array(z.string()).min(1, "Select at least one category"),
-  problem_areas: z.array(z.string()).min(1, "Add at least one problem area"),
+  solution_categories: z.array(z.string()).min(1, "Select at least one primary category"),
+  problem_areas: z.array(z.string()).min(1, "Add at least one solution category"),
 });
 
 export const onboardingStep2Schema = z.object({

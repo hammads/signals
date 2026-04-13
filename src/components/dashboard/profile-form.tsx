@@ -11,6 +11,7 @@ import {
   DISTRICT_SIZES,
   US_STATES,
   FUNDING_SOURCES,
+  FUNDING_SOURCE_DESCRIPTIONS,
   type SignalProfileInput,
 } from "@/types/schemas";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               name="solution_categories"
               render={() => (
                 <FormItem>
-                  <FormLabel>Solution categories</FormLabel>
+                  <FormLabel>Primary categories</FormLabel>
                   <FormControl>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {SOLUTION_CATEGORIES.map((category) => (
@@ -105,7 +106,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                           control={form.control}
                           name="solution_categories"
                           render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormItem className="flex flex-row items-center gap-2">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value?.includes(category)}
@@ -138,7 +139,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               name="problem_areas"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Problem areas</FormLabel>
+                  <FormLabel>Solution categories</FormLabel>
                   <FormControl>
                     <TagInput
                       value={field.value ?? []}
@@ -170,7 +171,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                         control={form.control}
                         name="district_types"
                         render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormItem className="flex flex-row items-center gap-2">
                             <FormControl>
                               <Checkbox
                                 checked={(field.value?.length ?? 0) === 0}
@@ -193,7 +194,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                           render={({ field }) => {
                             const isAll = (field.value?.length ?? 0) === 0;
                             return (
-                              <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormItem className="flex flex-row items-center gap-2">
                                 <FormControl>
                                   <Checkbox
                                     checked={
@@ -271,7 +272,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                         control={form.control}
                         name="target_regions"
                         render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormItem className="flex flex-row items-center gap-2">
                             <FormControl>
                               <Checkbox
                                 checked={(field.value?.length ?? 0) === 0}
@@ -294,7 +295,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                           render={({ field }) => {
                             const isAll = (field.value?.length ?? 0) === 0;
                             return (
-                              <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormItem className="flex flex-row items-center gap-2">
                                 <FormControl>
                                   <Checkbox
                                     checked={
@@ -353,8 +354,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                           control={form.control}
                           name="funding_sources"
                           render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2 space-y-0">
-                              <FormControl>
+                            <FormItem className="flex flex-row items-start gap-2 space-y-0">
+                              <FormControl className="mt-1">
                                 <Checkbox
                                   checked={field.value?.includes(source)}
                                   onCheckedChange={(checked) => {
@@ -367,9 +368,14 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="font-normal">
-                                {source}
-                              </FormLabel>
+                              <div className="grid gap-0.5 leading-snug">
+                                <FormLabel className="font-normal">
+                                  {source}
+                                </FormLabel>
+                                <p className="text-muted-foreground text-xs">
+                                  {FUNDING_SOURCE_DESCRIPTIONS[source]}
+                                </p>
+                              </div>
                             </FormItem>
                           )}
                         />

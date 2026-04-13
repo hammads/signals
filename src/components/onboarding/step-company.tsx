@@ -67,7 +67,7 @@ export function StepCompany({ data, onChange, onNext }: StepCompanyProps) {
           name="solution_categories"
           render={() => (
             <FormItem>
-              <FormLabel>Solution categories</FormLabel>
+              <FormLabel>Primary categories</FormLabel>
               <FormControl>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {SOLUTION_CATEGORIES.map((category) => (
@@ -76,7 +76,7 @@ export function StepCompany({ data, onChange, onNext }: StepCompanyProps) {
                       control={form.control}
                       name="solution_categories"
                       render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormItem className="flex flex-row items-center gap-2">
                           <FormControl>
                             <Checkbox
                               checked={field.value?.includes(category)}
@@ -105,7 +105,7 @@ export function StepCompany({ data, onChange, onNext }: StepCompanyProps) {
           name="problem_areas"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Problem areas</FormLabel>
+              <FormLabel>Solution categories</FormLabel>
               <FormControl>
                 <TagInput
                   value={field.value ?? []}

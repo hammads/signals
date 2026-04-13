@@ -55,8 +55,8 @@ describe("buildProfileEmbeddingText", () => {
     };
     const result = buildProfileEmbeddingText(profile);
     expect(result).toContain("Keywords: literacy, math");
-    expect(result).toContain("Problem areas: Student engagement");
-    expect(result).toContain("Solution categories: Curriculum & Instruction");
+    expect(result).toContain("Solution categories: Student engagement");
+    expect(result).toContain("Primary categories: Curriculum & Instruction");
     expect(result).toContain("Funding sources: Title I");
     expect(result).toContain("Target regions: CA, TX");
     expect(result).toContain("District types: urban");

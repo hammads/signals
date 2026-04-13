@@ -13,8 +13,8 @@ export function buildMatchPrompt(
 ): string {
   const profileContext = [
     profile.keywords?.length ? `Keywords: ${profile.keywords.join(", ")}` : null,
-    profile.problem_areas?.length ? `Problem areas: ${profile.problem_areas.join(", ")}` : null,
-    profile.solution_categories?.length ? `Solution categories: ${profile.solution_categories.join(", ")}` : null,
+    profile.problem_areas?.length ? `Solution categories: ${profile.problem_areas.join(", ")}` : null,
+    profile.solution_categories?.length ? `Primary categories: ${profile.solution_categories.join(", ")}` : null,
     profile.funding_sources?.length ? `Funding sources: ${profile.funding_sources.join(", ")}` : null,
     profile.target_regions?.length ? `Target regions: ${profile.target_regions.join(", ")}` : null,
     profile.district_types?.length ? `District types: ${profile.district_types.join(", ")}` : null,

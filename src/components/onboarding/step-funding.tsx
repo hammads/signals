@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   onboardingStep3Schema,
   FUNDING_SOURCES,
+  FUNDING_SOURCE_DESCRIPTIONS,
   type OnboardingStep3,
 } from "@/types/schemas";
 import { Button } from "@/components/ui/button";
@@ -57,8 +58,8 @@ export function StepFunding({ data, onChange, onNext, onBack }: StepFundingProps
                       control={form.control}
                       name="funding_sources"
                       render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
+                        <FormItem className="flex flex-row items-start gap-2 space-y-0">
+                          <FormControl className="mt-1">
                             <Checkbox
                               checked={field.value?.includes(source)}
                               onCheckedChange={(checked) => {
@@ -69,7 +70,12 @@ export function StepFunding({ data, onChange, onNext, onBack }: StepFundingProps
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal">{source}</FormLabel>
+                          <div className="grid gap-0.5 leading-snug">
+                            <FormLabel className="font-normal">{source}</FormLabel>
+                            <p className="text-muted-foreground text-xs">
+                              {FUNDING_SOURCE_DESCRIPTIONS[source]}
+                            </p>
+                          </div>
                         </FormItem>
                       )}
                     />

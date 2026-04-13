@@ -50,8 +50,8 @@ AI Signals Radar helps education founders stay ahead by surfacing **personalized
 
 2. **Onboarding** — Complete the onboarding wizard to create your **signal profile**. You'll specify:
    - Keywords (e.g., "assessment", "literacy", "MTSS")
-   - Problem areas (e.g., "student engagement", "data interoperability")
-   - Solution categories (e.g., "formative assessment", "professional development")
+   - Primary categories (e.g., Curriculum & Instruction, Assessment & Data)
+   - Solution categories (e.g., "student engagement", "data interoperability")
    - Funding sources (e.g., "Title I", "ESSER")
    - Competitor names
    - Target regions (e.g., "TX", "CA", "IL")
@@ -140,8 +140,8 @@ Your **signal profile** is built during onboarding and can be edited anytime at 
 ### What's in Your Profile
 
 - **Keywords** — Terms that describe your focus (e.g., "assessment", "literacy")
-- **Problem areas** — Challenges you address (e.g., "student engagement")
-- **Solution categories** — What you offer (e.g., "formative assessment")
+- **Primary categories** — Broad solution areas you select (e.g., Curriculum & Instruction)
+- **Solution categories** — Tags for challenges or outcomes you address (e.g., "student engagement")
 - **Funding sources** — Grants you care about (e.g., "Title I", "ESSER")
 - **Competitor names** — Companies you track
 - **Target regions** — States or regions (e.g., "TX", "CA")
@@ -274,7 +274,7 @@ Your signal profile is created during onboarding. Without it, the system can't m
 
 Very narrow profiles may have fewer matches because fewer signals pass the relevance threshold.
 
-**Fix:** Broaden your profile slightly — add more keywords, regions, or problem areas. You can always refine later.
+**Fix:** Broaden your profile slightly — add more keywords, regions, or solution categories. You can always refine later.
 
 ### 3. New Account / Recent Profile Update
 
@@ -317,15 +317,13 @@ Your signal profile drives your matches. Here's how to set it up for the best re
 - Include product terms (e.g., "formative assessment"), market terms (e.g., "MTSS"), and funding terms (e.g., "ESSER")
 - Avoid overly generic terms ("education") — be specific enough to be useful
 
-### Problem Areas
+### Primary categories
 
-- List the **challenges** your solution addresses
-- Examples: "student engagement", "data interoperability", "teacher burnout"
+- Select **broad areas** that match your offering (e.g., Curriculum & Instruction, SEL)
 
-### Solution Categories
+### Solution categories
 
-- Describe **what you offer** — product categories, service types
-- Examples: "formative assessment", "professional development", "curriculum"
+- Add **tags** for challenges, outcomes, or focus areas (e.g., "student engagement", "data interoperability", "teacher burnout")
 
 ### Funding Sources
 

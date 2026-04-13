@@ -29,8 +29,8 @@ const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 function buildProfileEmbeddingText(profile) {
   const parts = [];
   if (profile.keywords?.length) parts.push(`Keywords: ${profile.keywords.join(", ")}`);
-  if (profile.problem_areas?.length) parts.push(`Problem areas: ${profile.problem_areas.join(", ")}`);
-  if (profile.solution_categories?.length) parts.push(`Solution categories: ${profile.solution_categories.join(", ")}`);
+  if (profile.problem_areas?.length) parts.push(`Solution categories: ${profile.problem_areas.join(", ")}`);
+  if (profile.solution_categories?.length) parts.push(`Primary categories: ${profile.solution_categories.join(", ")}`);
   if (profile.funding_sources?.length) parts.push(`Funding sources: ${profile.funding_sources.join(", ")}`);
   if (profile.competitor_names?.length) parts.push(`Competitors: ${profile.competitor_names.join(", ")}`);
   if (profile.target_regions?.length) parts.push(`Target regions: ${profile.target_regions.join(", ")}`);

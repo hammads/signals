@@ -86,8 +86,8 @@ Founder’s signal configuration: keywords, regions, funding sources, etc. Used 
 | `target_regions` | text[] | NO | `'{}'` | Target regions (e.g. US states) |
 | `district_types` | text[] | NO | `'{}'` | `urban` \| `suburban` \| `rural` |
 | `district_size_range` | text | YES | — | `small` \| `medium` \| `large` |
-| `problem_areas` | text[] | NO | `'{}'` | Problem areas |
-| `solution_categories` | text[] | NO | `'{}'` | Solution categories |
+| `problem_areas` | text[] | NO | `'{}'` | Solution category tags (freeform) |
+| `solution_categories` | text[] | NO | `'{}'` | Primary categories (predefined selections) |
 | `funding_sources` | text[] | NO | `'{}'` | e.g. Title I, ESSER, E-Rate |
 | `competitor_names` | text[] | NO | `'{}'` | Competitors to track |
 | `bellwether_districts` | text[] | NO | `'{}'` | Districts to watch |

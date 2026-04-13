@@ -78,10 +78,10 @@ export function buildProfileEmbeddingText(profile: {
     parts.push(`Keywords: ${profile.keywords.join(", ")}`);
   }
   if (profile.problem_areas?.length) {
-    parts.push(`Problem areas: ${profile.problem_areas.join(", ")}`);
+    parts.push(`Solution categories: ${profile.problem_areas.join(", ")}`);
   }
   if (profile.solution_categories?.length) {
-    parts.push(`Solution categories: ${profile.solution_categories.join(", ")}`);
+    parts.push(`Primary categories: ${profile.solution_categories.join(", ")}`);
   }
   if (profile.funding_sources?.length) {
     parts.push(`Funding sources: ${profile.funding_sources.join(", ")}`);

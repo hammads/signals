@@ -7,6 +7,8 @@ import {
   signalInsertSchema,
   dataSourceSchema,
   signalMatchInsightSchema,
+  FUNDING_SOURCES,
+  FUNDING_SOURCE_DESCRIPTIONS,
 } from "@/types/schemas";
 
 describe("onboardingStep1Schema", () => {
@@ -63,6 +65,15 @@ describe("onboardingStep2Schema", () => {
       target_regions: [],
     };
     expect(onboardingStep2Schema.parse(valid)).toEqual(valid);
+  });
+});
+
+describe("FUNDING_SOURCE_DESCRIPTIONS", () => {
+  it("has a non-empty description for every funding source", () => {
+    for (const source of FUNDING_SOURCES) {
+      const text = FUNDING_SOURCE_DESCRIPTIONS[source];
+      expect(text?.trim().length).toBeGreaterThan(0);
+    }
   });
 });
 

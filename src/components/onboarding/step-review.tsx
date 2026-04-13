@@ -61,7 +61,7 @@ export function StepReview({
 
           <Separator />
 
-          <Section title="Solution categories">
+          <Section title="Primary categories">
             {data.solution_categories.map((c) => (
               <Badge key={c} variant="secondary">
                 {c}
@@ -69,7 +69,7 @@ export function StepReview({
             ))}
           </Section>
 
-          <Section title="Problem areas">
+          <Section title="Solution categories">
             {data.problem_areas.map((p) => (
               <Badge key={p} variant="outline">
                 {p}

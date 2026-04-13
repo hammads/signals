@@ -14,7 +14,7 @@ Answers to common client questions for demos and onboarding.
 2. **Onboarding** (`/onboarding`)  
    - Complete the onboarding wizard to create a **signal profile**:
      - Keywords (e.g., "assessment", "literacy", "MTSS")
-     - Problem areas (e.g., "student engagement", "data interoperability")
+     - Primary categories (e.g., Curriculum & Instruction) and solution categories (e.g., "student engagement", "data interoperability")
      - Solution categories (e.g., "formative assessment", "professional development")
      - Funding sources (e.g., "Title I", "ESSER")
      - Competitor names
