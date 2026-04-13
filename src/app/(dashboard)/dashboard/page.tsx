@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  expandNestedDistrictsOnMatches,
+  type SignalWithNestedDistricts,
+} from "@/lib/districts/expand-nested-districts";
+import { signalMatchesSelect } from "@/lib/supabase/signal-match-select";
 import { SignalFeed } from "@/components/dashboard/signal-feed";
-import type { SignalMatchWithSignal } from "@/types/database";
-import type { SignalCategory } from "@/types/database";
+import type { SignalCategory, SignalMatch } from "@/types/database";
 
 const PAGE_SIZE = 20;
 
@@ -26,10 +30,7 @@ export default async function DashboardPage({
   const offset = (page - 1) * PAGE_SIZE;
 
   const hasSignalFilter = Boolean(category || region);
-  // PostgREST cannot infer FKs through views; !signal_id pins the join to signals.id
-  const selectStr = hasSignalFilter
-    ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))"
-    : "*, signal:signals(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))";
+  const selectStr = signalMatchesSelect(hasSignalFilter);
 
   let query = supabase
     .from("signal_matches")
@@ -45,7 +46,7 @@ export default async function DashboardPage({
     query = query.eq("signals.region", region);
   }
 
-  const { data: matches, error, count } = await query;
+  const { data: rawMatches, error, count } = await query;
 
   if (error) {
     return (
@@ -55,9 +56,15 @@ export default async function DashboardPage({
     );
   }
 
+  const matches = expandNestedDistrictsOnMatches(
+    (rawMatches ?? []) as unknown as Array<
+      SignalMatch & { signal: SignalWithNestedDistricts | null }
+    >
+  );
+
   return (
     <SignalFeed
-      initialMatches={(matches ?? []) as SignalMatchWithSignal[]}
+      initialMatches={matches}
       totalCount={count ?? 0}
       page={page}
       pageSize={PAGE_SIZE}

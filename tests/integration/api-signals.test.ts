@@ -56,19 +56,26 @@ describe("GET /api/signals", () => {
   });
 
   it("returns paginated signal matches", async () => {
-    const mockMatches = [
+    const supabaseRows = [
       { id: "m1", signal_id: "s1", user_id: "user-123", signal: { title: "Test Signal" } },
     ];
 
     const chain = mockSupabase.from();
-    chain.range.mockResolvedValue({ data: mockMatches, count: 1, error: null });
+    chain.range.mockResolvedValue({ data: supabaseRows, count: 1, error: null });
 
     const request = new Request("http://localhost:3000/api/signals?page=1&limit=20");
     const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.data).toEqual(mockMatches);
+    expect(data.data).toEqual([
+      {
+        id: "m1",
+        signal_id: "s1",
+        user_id: "user-123",
+        signal: { title: "Test Signal", signal_districts: [] },
+      },
+    ]);
     expect(mockSupabase.from).toHaveBeenCalledWith("signal_matches");
   });
 });

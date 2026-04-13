@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import {
+  expandNestedDistrictsOnMatches,
+  type SignalWithNestedDistricts,
+} from "@/lib/districts/expand-nested-districts";
 import { createClient } from "@/lib/supabase/server";
+import { signalMatchesSelect } from "@/lib/supabase/signal-match-select";
+import type { SignalMatch } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
@@ -21,9 +27,7 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     const hasSignalFilter = Boolean(category || region);
-    const selectStr = hasSignalFilter
-      ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))"
-      : "*, signal:signals(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))";
+    const selectStr = signalMatchesSelect(hasSignalFilter);
 
     let query = supabase
       .from("signal_matches")
@@ -39,14 +43,20 @@ export async function GET(request: Request) {
       query = query.eq("signals.region", region);
     }
 
-    const { data, error, count } = await query;
+    const { data: rawData, error, count } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const data = expandNestedDistrictsOnMatches(
+      (rawData ?? []) as unknown as Array<
+        SignalMatch & { signal: SignalWithNestedDistricts | null }
+      >
+    );
+
     return NextResponse.json({
-      data: data ?? [],
+      data,
       total: count ?? 0,
       page,
       limit,

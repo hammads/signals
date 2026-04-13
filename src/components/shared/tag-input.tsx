@@ -25,8 +25,12 @@ export function TagInput({
 
   const addTag = React.useCallback(
     (tag: string) => {
-      const trimmed = tag.trim().toLowerCase();
-      if (!trimmed || value.includes(trimmed)) return;
+      const trimmed = tag.trim();
+      if (!trimmed) return;
+      const isDuplicate = value.some(
+        (v) => v.toLowerCase() === trimmed.toLowerCase()
+      );
+      if (isDuplicate) return;
       if (maxTags != null && value.length >= maxTags) return;
       onChange([...value, trimmed]);
       setInputValue("");

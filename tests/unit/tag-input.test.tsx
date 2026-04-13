@@ -50,6 +50,24 @@ describe("TagInput", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("preserves user-entered casing", () => {
+    const onChange = vi.fn();
+    render(<TagInput value={[]} onChange={onChange} />);
+    const input = screen.getByPlaceholderText("Add tags...");
+    fireEvent.change(input, { target: { value: "ClassDojo" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onChange).toHaveBeenCalledWith(["ClassDojo"]);
+  });
+
+  it("treats duplicates case-insensitively", () => {
+    const onChange = vi.fn();
+    render(<TagInput value={["Clever"]} onChange={onChange} />);
+    const input = screen.getByPlaceholderText("");
+    fireEvent.change(input, { target: { value: "clever" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("respects maxTags limit", () => {
     render(
       <TagInput value={["a", "b"]} onChange={vi.fn()} maxTags={2} />
