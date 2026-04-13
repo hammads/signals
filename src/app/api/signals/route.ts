@@ -22,8 +22,8 @@ export async function GET(request: Request) {
 
     const hasSignalFilter = Boolean(category || region);
     const selectStr = hasSignalFilter
-      ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))"
-      : "*, signal:signals(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))";
+      ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))"
+      : "*, signal:signals(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))";
 
     let query = supabase
       .from("signal_matches")

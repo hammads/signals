@@ -26,9 +26,10 @@ export default async function DashboardPage({
   const offset = (page - 1) * PAGE_SIZE;
 
   const hasSignalFilter = Boolean(category || region);
+  // PostgREST cannot infer FKs through views; !signal_id pins the join to signals.id
   const selectStr = hasSignalFilter
-    ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))"
-    : "*, signal:signals(*, signal_districts:signal_districts_expanded(lea_id, district_name, district_state, district_label, match_score))";
+    ? "*, signal:signals!inner(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))"
+    : "*, signal:signals(*, signal_districts:signal_districts_expanded!signal_id(lea_id, district_name, district_state, district_label, match_score))";
 
   let query = supabase
     .from("signal_matches")
