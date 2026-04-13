@@ -138,10 +138,23 @@ describe("POST /api/profiles/onboarding", () => {
   });
 
   it("creates profile and completes onboarding", async () => {
-    const chain = mockSupabase.from();
-    chain.insert.mockReturnValue(chain);
-    chain.update.mockReturnValue(chain);
-    chain.eq.mockResolvedValue({ error: null });
+    const fallbackChain = mockSupabase.from("_");
+
+    const signalChain: Record<string, unknown> = {};
+    signalChain.select = vi.fn(() => signalChain);
+    signalChain.eq = vi.fn(() => signalChain);
+    signalChain.limit = vi.fn().mockResolvedValue({ data: [], error: null });
+    signalChain.insert = vi.fn().mockResolvedValue({ error: null });
+
+    const profilesChain: Record<string, unknown> = {};
+    profilesChain.update = vi.fn(() => profilesChain);
+    profilesChain.eq = vi.fn().mockResolvedValue({ error: null });
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "signal_profiles") return signalChain;
+      if (table === "profiles") return profilesChain;
+      return fallbackChain;
+    });
 
     const request = new Request("http://localhost:3000/api/profiles/onboarding", {
       method: "POST",
@@ -162,5 +175,52 @@ describe("POST /api/profiles/onboarding", () => {
     expect(response.status).toBe(200);
     expect(mockSupabase.from).toHaveBeenCalledWith("signal_profiles");
     expect(mockSupabase.from).toHaveBeenCalledWith("profiles");
+    expect(signalChain.insert).toHaveBeenCalled();
+  });
+
+  it("updates existing signal profile when one already exists", async () => {
+    const fallbackChain = mockSupabase.from("_");
+
+    const signalChain: Record<string, unknown> = {};
+    signalChain.select = vi.fn(() => signalChain);
+    signalChain.limit = vi.fn().mockResolvedValue({
+      data: [{ id: "existing-sp" }],
+      error: null,
+    });
+    signalChain.update = vi.fn(() => signalChain);
+    signalChain.eq = vi
+      .fn()
+      .mockImplementationOnce(() => signalChain)
+      .mockResolvedValueOnce({ error: null });
+
+    const profilesChain: Record<string, unknown> = {};
+    profilesChain.update = vi.fn(() => profilesChain);
+    profilesChain.eq = vi.fn().mockResolvedValue({ error: null });
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "signal_profiles") return signalChain;
+      if (table === "profiles") return profilesChain;
+      return fallbackChain;
+    });
+
+    const body = {
+      company_name: "EdTech Co",
+      solution_categories: ["Assessment & Data"],
+      problem_areas: ["reading"],
+      district_types: ["urban"],
+      district_size_range: "large",
+      target_regions: ["TX"],
+      funding_sources: ["Title I"],
+      keywords: ["literacy"],
+      competitor_names: [],
+      bellwether_districts: [],
+    };
+    const request = new Request("http://localhost:3000/api/profiles/onboarding", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    expect(signalChain.update).toHaveBeenCalled();
   });
 });

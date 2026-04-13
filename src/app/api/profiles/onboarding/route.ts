@@ -32,30 +32,66 @@ export async function POST(request: Request) {
     const profileEmbedding = await (async () => {
       const text = buildProfileEmbeddingText(data);
       if (!text.trim()) return null;
-      const { embedding } = await embed({
-        model: openai.embedding("text-embedding-3-small"),
-        value: text,
-      });
-      return embedding as unknown as number[];
+      try {
+        const { embedding } = await embed({
+          model: openai.embedding("text-embedding-3-small"),
+          value: text,
+        });
+        return embedding as unknown as number[];
+      } catch (embedErr) {
+        console.error(
+          "[POST /api/profiles/onboarding] OpenAI embed failed",
+          embedErr
+        );
+        throw embedErr;
+      }
     })();
 
-    const { error: profileError } = await supabase
-      .from("signal_profiles")
-      .insert({
-        user_id: user.id,
-        keywords: data.keywords,
-        target_regions: data.target_regions,
-        district_types: data.district_types,
-        district_size_range: data.district_size_range,
-        problem_areas: data.problem_areas,
-        solution_categories: data.solution_categories,
-        funding_sources: data.funding_sources,
-        competitor_names: data.competitor_names,
-        bellwether_districts: data.bellwether_districts,
-        profile_embedding: profileEmbedding,
-      });
+    const profilePayload = {
+      keywords: data.keywords,
+      target_regions: data.target_regions,
+      district_types: data.district_types,
+      district_size_range: data.district_size_range,
+      problem_areas: data.problem_areas,
+      solution_categories: data.solution_categories,
+      funding_sources: data.funding_sources,
+      competitor_names: data.competitor_names,
+      bellwether_districts: data.bellwether_districts,
+      profile_embedding: profileEmbedding,
+    };
+
+    const { data: existingRows, error: signalProfileLookupError } =
+      await supabase
+        .from("signal_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+
+    if (signalProfileLookupError) {
+      console.error(
+        "[POST /api/profiles/onboarding] signal_profiles lookup failed",
+        signalProfileLookupError
+      );
+      return NextResponse.json(
+        { error: signalProfileLookupError.message },
+        { status: 500 }
+      );
+    }
+
+    const { error: profileError } = existingRows?.length
+      ? await supabase
+          .from("signal_profiles")
+          .update(profilePayload)
+          .eq("user_id", user.id)
+      : await supabase
+          .from("signal_profiles")
+          .insert({ user_id: user.id, ...profilePayload });
 
     if (profileError) {
+      console.error(
+        "[POST /api/profiles/onboarding] signal_profiles write failed",
+        profileError
+      );
       return NextResponse.json({ error: profileError.message }, { status: 500 });
     }
 
@@ -68,11 +104,16 @@ export async function POST(request: Request) {
       .eq("id", user.id);
 
     if (updateError) {
+      console.error(
+        "[POST /api/profiles/onboarding] profiles update failed",
+        updateError
+      );
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("[POST /api/profiles/onboarding] unexpected error", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
