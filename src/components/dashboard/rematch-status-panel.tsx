@@ -37,6 +37,7 @@ export function RematchStatusPanel({
     initialRematchStatus.finishedAt,
     initialRematchStatus.error,
     initialRematchStatus.signalsConsidered,
+    initialRematchStatus.candidatesTotal,
     initialRematchStatus.inserted,
     initialRematchStatus.updated,
   ]);

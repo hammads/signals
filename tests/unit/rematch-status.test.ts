@@ -15,6 +15,7 @@ describe("formatRematchSummary", () => {
       finishedAt: "2026-01-01T00:01:00Z",
       error: "RPC timeout",
       signalsConsidered: null,
+      candidatesTotal: null,
       inserted: null,
       updated: null,
     };
@@ -28,6 +29,7 @@ describe("formatRematchSummary", () => {
       finishedAt: "2026-01-01T00:01:00Z",
       error: null,
       signalsConsidered: null,
+      candidatesTotal: null,
       inserted: null,
       updated: null,
     };
@@ -41,6 +43,7 @@ describe("formatRematchSummary", () => {
       finishedAt: "2026-01-01T00:01:00Z",
       error: null,
       signalsConsidered: 12,
+      candidatesTotal: null,
       inserted: 2,
       updated: 3,
     };
@@ -58,10 +61,27 @@ describe("formatRematchSummary", () => {
       finishedAt: null,
       error: null,
       signalsConsidered: null,
+      candidatesTotal: null,
       inserted: null,
       updated: null,
     };
     expect(formatRematchSummary(p)).toBe("Scan in progress…");
+  });
+
+  it("shows live counts while running", () => {
+    const p: RematchStatusPayload = {
+      status: "running",
+      startedAt: "2026-01-01T00:00:00Z",
+      finishedAt: null,
+      error: null,
+      signalsConsidered: 5,
+      candidatesTotal: 20,
+      inserted: 1,
+      updated: 0,
+    };
+    const s = formatRematchSummary(p);
+    expect(s).toContain("5 / 20");
+    expect(s).toContain("candidates reviewed");
   });
 });
 

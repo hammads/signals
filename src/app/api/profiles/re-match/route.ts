@@ -87,6 +87,7 @@ export async function POST() {
         rematch_finished_at: null,
         rematch_error: null,
         rematch_signals_considered: null,
+        rematch_candidates_total: null,
         rematch_inserted: null,
         rematch_updated: null,
       })

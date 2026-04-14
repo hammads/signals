@@ -17,7 +17,7 @@ export default async function ScanHistoryPage() {
   const { data: runs, error } = await supabase
     .from("profile_rematch_runs")
     .select(
-      "id, status, error_message, signals_considered, inserted, updated, started_at, finished_at"
+      "id, status, error_message, signals_considered, candidates_total, inserted, updated, started_at, finished_at"
     )
     .eq("user_id", user.id)
     .order("started_at", { ascending: false })

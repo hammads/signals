@@ -2,12 +2,20 @@ import type { ProfileRematchRun } from "@/types/database";
 
 export type ScanHistoryOutcomeRow = Pick<
   ProfileRematchRun,
-  "status" | "signals_considered" | "inserted" | "updated"
+  "status" | "signals_considered" | "candidates_total" | "inserted" | "updated"
 >;
 
 /** Human-readable interpretation for the Notes column (not errors). */
 export function getScanOutcomeHint(run: ScanHistoryOutcomeRow): string {
   if (run.status === "running") {
+    const p = run.signals_considered;
+    const t = run.candidates_total;
+    if (p != null && t != null && t > 0) {
+      return `Reviewing candidates (${p} / ${t}). Scoring relevance with AI for each.`;
+    }
+    if (p != null && p > 0) {
+      return `${p} candidate${p === 1 ? "" : "s"} reviewed…`;
+    }
     return "In progress…";
   }
   if (run.status === "failed") {

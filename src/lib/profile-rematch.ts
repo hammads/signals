@@ -35,6 +35,7 @@ export async function fetchRematchStatus(): Promise<RematchStatusPayload> {
     finishedAt: data.finishedAt,
     error: data.error,
     signalsConsidered: data.signalsConsidered,
+    candidatesTotal: data.candidatesTotal ?? null,
     inserted: data.inserted,
     updated: data.updated,
   };

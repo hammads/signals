@@ -35,6 +35,7 @@ const mockProfile: SignalProfile = {
   rematch_finished_at: null,
   rematch_error: null,
   rematch_signals_considered: null,
+  rematch_candidates_total: null,
   rematch_inserted: null,
   rematch_updated: null,
   created_at: "2025-01-01T00:00:00Z",

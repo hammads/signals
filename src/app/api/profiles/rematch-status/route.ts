@@ -17,7 +17,7 @@ export async function GET() {
     const { data: row, error } = await supabase
       .from("signal_profiles")
       .select(
-        "rematch_status, rematch_started_at, rematch_finished_at, rematch_error, rematch_signals_considered, rematch_inserted, rematch_updated"
+        "rematch_status, rematch_started_at, rematch_finished_at, rematch_error, rematch_signals_considered, rematch_candidates_total, rematch_inserted, rematch_updated"
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -39,6 +39,7 @@ export async function GET() {
       finishedAt: row.rematch_finished_at,
       error: row.rematch_error,
       signalsConsidered: row.rematch_signals_considered,
+      candidatesTotal: row.rematch_candidates_total,
       inserted: row.rematch_inserted,
       updated: row.rematch_updated,
     };

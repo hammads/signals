@@ -94,6 +94,7 @@ export async function POST(
           rematch_status: "failed",
           rematch_finished_at: finishedAt,
           rematch_error: cancelMessage,
+          rematch_candidates_total: null,
         })
         .eq("user_id", user.id);
     }

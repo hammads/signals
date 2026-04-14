@@ -24,6 +24,40 @@ async function runWasCancelled(
   return !data || data.status !== "running";
 }
 
+/** Persists live progress so scan history and dashboard update while the job runs. */
+async function persistRematchProgress(
+  supabase: SupabaseClient,
+  runId: string,
+  userId: string,
+  progress: {
+    candidatesTotal: number;
+    processed: number;
+    inserted: number;
+    updated: number;
+  }
+) {
+  await supabase
+    .from("profile_rematch_runs")
+    .update({
+      candidates_total: progress.candidatesTotal,
+      signals_considered: progress.processed,
+      inserted: progress.inserted,
+      updated: progress.updated,
+    })
+    .eq("id", runId)
+    .eq("user_id", userId);
+
+  await supabase
+    .from("signal_profiles")
+    .update({
+      rematch_candidates_total: progress.candidatesTotal,
+      rematch_signals_considered: progress.processed,
+      rematch_inserted: progress.inserted,
+      rematch_updated: progress.updated,
+    })
+    .eq("user_id", userId);
+}
+
 async function markRematchCompleted(
   supabase: SupabaseClient,
   userId: string,
@@ -34,17 +68,15 @@ async function markRematchCompleted(
   },
   runId: string
 ) {
-  await supabase
-    .from("signal_profiles")
-    .update({
-      rematch_status: "completed",
-      rematch_finished_at: new Date().toISOString(),
-      rematch_error: null,
-      rematch_signals_considered: summary.signalsConsidered,
-      rematch_inserted: summary.inserted,
-      rematch_updated: summary.updated,
-    })
-    .eq("user_id", userId);
+  await supabase.from("signal_profiles").update({
+    rematch_status: "completed",
+    rematch_finished_at: new Date().toISOString(),
+    rematch_error: null,
+    rematch_signals_considered: summary.signalsConsidered,
+    rematch_candidates_total: null,
+    rematch_inserted: summary.inserted,
+    rematch_updated: summary.updated,
+  }).eq("user_id", userId);
 
   const finishedAt = new Date().toISOString();
   const { error: runErr } = await supabase
@@ -53,6 +85,7 @@ async function markRematchCompleted(
       status: "completed",
       finished_at: finishedAt,
       error_message: null,
+      candidates_total: summary.signalsConsidered,
       signals_considered: summary.signalsConsidered,
       inserted: summary.inserted,
       updated: summary.updated,
@@ -70,14 +103,12 @@ async function markRematchFailed(
   message: string,
   runId: string
 ) {
-  await supabase
-    .from("signal_profiles")
-    .update({
-      rematch_status: "failed",
-      rematch_finished_at: new Date().toISOString(),
-      rematch_error: message,
-    })
-    .eq("user_id", userId);
+  await supabase.from("signal_profiles").update({
+    rematch_status: "failed",
+    rematch_finished_at: new Date().toISOString(),
+    rematch_error: message,
+    rematch_candidates_total: null,
+  }).eq("user_id", userId);
 
   const finishedAt = new Date().toISOString();
   const { error: runErr } = await supabase
@@ -117,6 +148,7 @@ export const reMatchProfile = inngest.createFunction(
           rematch_status: "failed",
           rematch_finished_at: new Date().toISOString(),
           rematch_error: message,
+          rematch_candidates_total: null,
         })
         .eq("user_id", userId);
     },
@@ -178,78 +210,133 @@ export const reMatchProfile = inngest.createFunction(
       if (await runWasCancelled(supabase, runId, userId)) {
         return { processed: 0, skipped: "cancelled" };
       }
-      await markRematchCompleted(supabase, userId, {
-        signalsConsidered: 0,
-        inserted: 0,
-        updated: 0,
-      }, runId);
+      await markRematchCompleted(
+        supabase,
+        userId,
+        {
+          signalsConsidered: 0,
+          inserted: 0,
+          updated: 0,
+        },
+        runId
+      );
       return { processed: 0, inserted: 0, updated: 0, signalIds: [] };
     }
 
-    let inserted = 0;
-    let updated = 0;
+    const total = matches.length;
+    await persistRematchProgress(supabase, runId, userId, {
+      candidatesTotal: total,
+      processed: 0,
+      inserted: 0,
+      updated: 0,
+    });
 
-    for (const m of matches as Array<{ signal_id: string; similarity: number }>) {
-      await step.run(`re-match-signal-${m.signal_id}`, async () => {
+    for (let i = 0; i < matches.length; i++) {
+      const m = matches[i] as { signal_id: string; similarity: number };
+      const stepResult = await step.run(`re-match-signal-${i}-${m.signal_id}`, async () => {
         if (await runWasCancelled(supabase, runId, userId)) {
-          return { skipped: true as const };
+          return { cancelled: true as const };
         }
+
+        const { data: runRow } = await supabase
+          .from("profile_rematch_runs")
+          .select("inserted, updated")
+          .eq("id", runId)
+          .single();
+
+        const prevIns = runRow?.inserted ?? 0;
+        const prevUp = runRow?.updated ?? 0;
+
         const { data: signal, error: signalError } = await supabase
           .from("signals")
           .select("*")
           .eq("id", m.signal_id)
           .single();
 
-        if (signalError || !signal) return;
+        let newIns = prevIns;
+        let newUp = prevUp;
 
-        const result = await generateObject({
-          model: openai("gpt-4o-mini"),
-          schema: signalMatchInsightSchema,
-          prompt: buildMatchPrompt(signal as Signal, profile as SignalProfile),
+        if (!signalError && signal) {
+          const result = await generateObject({
+            model: openai("gpt-4o-mini"),
+            schema: signalMatchInsightSchema,
+            prompt: buildMatchPrompt(signal as Signal, profile as SignalProfile),
+          });
+
+          const insight = result.object;
+          if (insight.relevance_score >= RELEVANCE_THRESHOLD) {
+            const { data: existing } = await supabase
+              .from("signal_matches")
+              .select("id, is_read, is_bookmarked")
+              .eq("signal_id", m.signal_id)
+              .eq("user_id", userId)
+              .maybeSingle();
+
+            if (existing) {
+              await supabase
+                .from("signal_matches")
+                .update({
+                  relevance_score: insight.relevance_score,
+                  why_it_matters: insight.why_it_matters,
+                  action_suggestion: insight.action_suggestion,
+                })
+                .eq("id", existing.id);
+              newUp = prevUp + 1;
+            } else {
+              await supabase.from("signal_matches").insert({
+                signal_id: m.signal_id,
+                user_id: userId,
+                relevance_score: insight.relevance_score,
+                why_it_matters: insight.why_it_matters,
+                action_suggestion: insight.action_suggestion,
+              });
+              newIns = prevIns + 1;
+            }
+          }
+        }
+
+        await persistRematchProgress(supabase, runId, userId, {
+          candidatesTotal: total,
+          processed: i + 1,
+          inserted: newIns,
+          updated: newUp,
         });
 
-        const insight = result.object;
-        if (insight.relevance_score < RELEVANCE_THRESHOLD) return;
-
-        const { data: existing } = await supabase
-          .from("signal_matches")
-          .select("id, is_read, is_bookmarked")
-          .eq("signal_id", m.signal_id)
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from("signal_matches")
-            .update({
-              relevance_score: insight.relevance_score,
-              why_it_matters: insight.why_it_matters,
-              action_suggestion: insight.action_suggestion,
-            })
-            .eq("id", existing.id);
-          updated++;
-        } else {
-          await supabase.from("signal_matches").insert({
-            signal_id: m.signal_id,
-            user_id: userId,
-            relevance_score: insight.relevance_score,
-            why_it_matters: insight.why_it_matters,
-            action_suggestion: insight.action_suggestion,
-          });
-          inserted++;
-        }
+        return { cancelled: false as const };
       });
+
+      if (
+        stepResult &&
+        typeof stepResult === "object" &&
+        "cancelled" in stepResult &&
+        (stepResult as { cancelled?: boolean }).cancelled
+      ) {
+        break;
+      }
     }
 
     if (await runWasCancelled(supabase, runId, userId)) {
       return { processed: matches.length, skipped: "cancelled" };
     }
 
-    await markRematchCompleted(supabase, userId, {
-      signalsConsidered: matches.length,
-      inserted,
-      updated,
-    }, runId);
+    const { data: finalRow } = await supabase
+      .from("profile_rematch_runs")
+      .select("inserted, updated")
+      .eq("id", runId)
+      .single();
+    const inserted = finalRow?.inserted ?? 0;
+    const updated = finalRow?.updated ?? 0;
+
+    await markRematchCompleted(
+      supabase,
+      userId,
+      {
+        signalsConsidered: matches.length,
+        inserted,
+        updated,
+      },
+      runId
+    );
 
     return { processed: matches.length, inserted, updated };
   }

@@ -6,6 +6,7 @@ export type RematchRunListRow = Pick<
   | "status"
   | "error_message"
   | "signals_considered"
+  | "candidates_total"
   | "inserted"
   | "updated"
   | "started_at"

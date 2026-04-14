@@ -20,6 +20,7 @@ type RunRow = Pick<
   | "status"
   | "error_message"
   | "signals_considered"
+  | "candidates_total"
   | "inserted"
   | "updated"
   | "started_at"
@@ -29,6 +30,18 @@ type RunRow = Pick<
 function countOrDash(n: number | null | undefined): string {
   if (n == null) return "—";
   return String(n);
+}
+
+function formatCandidatesCell(run: RunRow): string {
+  if (run.status === "running") {
+    const p = run.signals_considered;
+    const t = run.candidates_total;
+    if (p != null && t != null && t > 0) {
+      return `${p} / ${t}`;
+    }
+    return "—";
+  }
+  return countOrDash(run.signals_considered);
 }
 
 function statusBadgeVariant(
@@ -74,7 +87,7 @@ export function ScanHistoryTable({
             <TableHead className="w-[140px]">Started</TableHead>
             <TableHead className="w-[140px]">Finished</TableHead>
             <TableHead className="w-[100px]">Status</TableHead>
-            <TableHead className="text-right">Candidates</TableHead>
+            <TableHead className="text-right">Candidates (done / total)</TableHead>
             <TableHead className="text-right">New</TableHead>
             <TableHead className="text-right">Updated</TableHead>
             {showActions ? (
@@ -98,7 +111,7 @@ export function ScanHistoryTable({
                 <Badge variant={statusBadgeVariant(run.status)}>{run.status}</Badge>
               </TableCell>
               <TableCell className="align-top text-right text-sm tabular-nums">
-                {countOrDash(run.signals_considered)}
+                {formatCandidatesCell(run)}
               </TableCell>
               <TableCell className="align-top text-right text-sm tabular-nums">
                 {countOrDash(run.inserted)}

@@ -7,10 +7,23 @@ describe("getScanOutcomeHint", () => {
       getScanOutcomeHint({
         status: "running",
         signals_considered: null,
+        candidates_total: null,
         inserted: null,
         updated: null,
       })
     ).toBe("In progress…");
+  });
+
+  it("shows live progress when totals are present", () => {
+    const s = getScanOutcomeHint({
+      status: "running",
+      signals_considered: 12,
+      candidates_total: 40,
+      inserted: 1,
+      updated: 2,
+    });
+    expect(s).toContain("12 / 40");
+    expect(s).toContain("AI");
   });
 
   it("returns dash for failed (error text shown separately)", () => {
@@ -18,6 +31,7 @@ describe("getScanOutcomeHint", () => {
       getScanOutcomeHint({
         status: "failed",
         signals_considered: 5,
+        candidates_total: null,
         inserted: 0,
         updated: 0,
       })
@@ -28,6 +42,7 @@ describe("getScanOutcomeHint", () => {
     const s = getScanOutcomeHint({
       status: "completed",
       signals_considered: 0,
+      candidates_total: null,
       inserted: 0,
       updated: 0,
     });
@@ -38,6 +53,7 @@ describe("getScanOutcomeHint", () => {
     const s = getScanOutcomeHint({
       status: "completed",
       signals_considered: 10,
+      candidates_total: null,
       inserted: 0,
       updated: 0,
     });
@@ -49,6 +65,7 @@ describe("getScanOutcomeHint", () => {
       getScanOutcomeHint({
         status: "completed",
         signals_considered: 3,
+        candidates_total: null,
         inserted: 1,
         updated: 0,
       })

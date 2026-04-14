@@ -52,7 +52,7 @@ export default async function DashboardPage({
   const { data: signalProfileRow } = await supabase
     .from("signal_profiles")
     .select(
-      "profile_embedding, rematch_status, rematch_started_at, rematch_finished_at, rematch_error, rematch_signals_considered, rematch_inserted, rematch_updated"
+      "profile_embedding, rematch_status, rematch_started_at, rematch_finished_at, rematch_error, rematch_signals_considered, rematch_candidates_total, rematch_inserted, rematch_updated"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -64,6 +64,7 @@ export default async function DashboardPage({
     | "rematch_finished_at"
     | "rematch_error"
     | "rematch_signals_considered"
+    | "rematch_candidates_total"
     | "rematch_inserted"
     | "rematch_updated"
   > | null;
@@ -74,6 +75,7 @@ export default async function DashboardPage({
     finishedAt: sp?.rematch_finished_at ?? null,
     error: sp?.rematch_error ?? null,
     signalsConsidered: sp?.rematch_signals_considered ?? null,
+    candidatesTotal: sp?.rematch_candidates_total ?? null,
     inserted: sp?.rematch_inserted ?? null,
     updated: sp?.rematch_updated ?? null,
   };

@@ -46,7 +46,10 @@ export interface ProfileRematchRun {
   user_id: string;
   status: RematchJobStatus;
   error_message: string | null;
+  /** Processed candidate count during run; final total when completed. */
   signals_considered: number | null;
+  /** Total vector matches for this run (set when processing starts). */
+  candidates_total: number | null;
   inserted: number | null;
   updated: number | null;
   started_at: string;
@@ -72,6 +75,7 @@ export interface SignalProfile {
   rematch_finished_at: string | null;
   rematch_error: string | null;
   rematch_signals_considered: number | null;
+  rematch_candidates_total: number | null;
   rematch_inserted: number | null;
   rematch_updated: number | null;
   created_at: string;

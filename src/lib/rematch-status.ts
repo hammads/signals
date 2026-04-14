@@ -5,7 +5,10 @@ export type RematchStatusPayload = {
   startedAt: string | null;
   finishedAt: string | null;
   error: string | null;
+  /** Candidates processed so far (running) or final count (completed). */
   signalsConsidered: number | null;
+  /** Total vector matches for the current run (running only; null when idle). */
+  candidatesTotal: number | null;
   inserted: number | null;
   updated: number | null;
 };
@@ -70,6 +73,14 @@ export function formatRematchSummary(p: RematchStatusPayload): string {
     return parts.join(" · ");
   }
   if (p.status === "running") {
+    const c = p.signalsConsidered;
+    const t = p.candidatesTotal;
+    if (c != null && t != null && t > 0) {
+      return `Scan in progress: ${c} / ${t} candidates reviewed${p.inserted != null || p.updated != null ? ` · ${p.inserted ?? 0} new, ${p.updated ?? 0} updated` : ""}.`;
+    }
+    if (c != null && c > 0) {
+      return `Scan in progress: ${c} candidate${c === 1 ? "" : "s"} reviewed so far.`;
+    }
     return "Scan in progress…";
   }
   return "";
