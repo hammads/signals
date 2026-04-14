@@ -104,18 +104,34 @@ describe("SignalCard", () => {
     );
   });
 
-  it("shows Generate insight when blurbs are missing and handler is provided", () => {
-    const onGenerateInsight = vi.fn();
+  it("shows preparing insight when blurbs are missing and insight is pending", () => {
     render(
       <SignalCard
         {...defaultProps}
         why_it_matters={null}
         action_suggestion={null}
-        onGenerateInsight={onGenerateInsight}
+        insightPending
       />,
       { wrapper: Wrapper }
     );
-    fireEvent.click(screen.getByRole("button", { name: /generate insight/i }));
-    expect(onGenerateInsight).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(/preparing personalized insight/i)
+    ).toBeInTheDocument();
+  });
+
+  it("shows generating text when insight is loading", () => {
+    render(
+      <SignalCard
+        {...defaultProps}
+        why_it_matters={null}
+        action_suggestion={null}
+        insightPending
+        insightLoading
+      />,
+      { wrapper: Wrapper }
+    );
+    expect(
+      screen.getByText(/generating personalized insight/i)
+    ).toBeInTheDocument();
   });
 });

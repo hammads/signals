@@ -1,7 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { SignalCard } from "@/components/shared/signal-card";
@@ -58,6 +66,7 @@ export function SignalFeed({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [insightLoadingId, setInsightLoadingId] = useState<string | null>(null);
+  const insightCompletedRef = useRef(new Set<string>());
 
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -122,8 +131,9 @@ export function SignalFeed({
     [router]
   );
 
-  const handleGenerateInsight = useCallback(
-    async (matchId: string) => {
+  const generateInsight = useCallback(
+    async (matchId: string, options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
       setInsightLoadingId(matchId);
       try {
         const res = await fetch(`/api/signal-matches/${matchId}/insight`, {
@@ -132,12 +142,17 @@ export function SignalFeed({
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         if (!res.ok) {
           toast.error(data.error ?? "Could not generate insight");
-          return;
+          return false;
         }
-        toast.success("Insight added");
+        if (!silent) {
+          toast.success("Insight added");
+        }
+        insightCompletedRef.current.add(matchId);
         router.refresh();
+        return true;
       } catch {
         toast.error("Could not generate insight");
+        return false;
       } finally {
         setInsightLoadingId(null);
       }
@@ -145,14 +160,47 @@ export function SignalFeed({
     [router]
   );
 
-  const totalPages = Math.ceil(totalCount / pageSize) || 1;
-  const hasNext = page < totalPages;
-  const hasPrev = page > 1;
-
   const validMatches = initialMatches.filter(
     (match): match is typeof match & { signal: NonNullable<typeof match.signal> } =>
       match.signal != null
   );
+
+  const missingInsightKey = useMemo(() => {
+    const ids = validMatches
+      .filter(
+        (m) =>
+          !m.why_it_matters?.trim() && !m.action_suggestion?.trim()
+      )
+      .map((m) => m.id)
+      .sort();
+    return ids.join(",");
+  }, [validMatches]);
+
+  useEffect(() => {
+    if (!missingInsightKey) return;
+
+    const ids = missingInsightKey.split(",").filter(Boolean);
+    const pending = ids.filter((id) => !insightCompletedRef.current.has(id));
+    if (pending.length === 0) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      for (const matchId of pending) {
+        if (cancelled) return;
+        await generateInsight(matchId, { silent: true });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [missingInsightKey, generateInsight]);
+
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
+
   const isEmpty = validMatches.length === 0;
 
   // Defer Select to client-only to avoid Radix useId hydration mismatch (aria-controls)
@@ -264,11 +312,7 @@ export function SignalFeed({
                     handleBookmarkToggle(match.id, match.is_bookmarked)
                   }
                   onMarkRead={() => handleMarkRead(match.id)}
-                  onGenerateInsight={
-                    needsInsight
-                      ? () => handleGenerateInsight(match.id)
-                      : undefined
-                  }
+                  insightPending={needsInsight}
                   insightLoading={insightLoadingId === match.id}
                 />
               );
