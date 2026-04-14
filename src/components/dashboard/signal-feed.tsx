@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useSyncExternalStore, useTransition } from "react";
+import { useCallback, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { SignalCard } from "@/components/shared/signal-card";
@@ -57,6 +57,7 @@ export function SignalFeed({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [insightLoadingId, setInsightLoadingId] = useState<string | null>(null);
 
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -117,6 +118,29 @@ export function SignalFeed({
         return;
       }
       router.refresh();
+    },
+    [router]
+  );
+
+  const handleGenerateInsight = useCallback(
+    async (matchId: string) => {
+      setInsightLoadingId(matchId);
+      try {
+        const res = await fetch(`/api/signal-matches/${matchId}/insight`, {
+          method: "POST",
+        });
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          toast.error(data.error ?? "Could not generate insight");
+          return;
+        }
+        toast.success("Insight added");
+        router.refresh();
+      } catch {
+        toast.error("Could not generate insight");
+      } finally {
+        setInsightLoadingId(null);
+      }
     },
     [router]
   );
@@ -223,6 +247,9 @@ export function SignalFeed({
               const signal = match.signal as typeof match.signal & {
                 signal_districts?: SignalDistrictExpanded[];
               };
+              const needsInsight =
+                !match.why_it_matters?.trim() &&
+                !match.action_suggestion?.trim();
               return (
                 <SignalCard
                   key={match.id}
@@ -237,6 +264,12 @@ export function SignalFeed({
                     handleBookmarkToggle(match.id, match.is_bookmarked)
                   }
                   onMarkRead={() => handleMarkRead(match.id)}
+                  onGenerateInsight={
+                    needsInsight
+                      ? () => handleGenerateInsight(match.id)
+                      : undefined
+                  }
+                  insightLoading={insightLoadingId === match.id}
                 />
               );
             })}

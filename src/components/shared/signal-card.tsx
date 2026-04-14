@@ -5,7 +5,9 @@ import {
   BookmarkCheck,
   ExternalLink,
   Lightbulb,
+  Loader2,
   MapPin,
+  Sparkles,
   Target,
 } from "lucide-react";
 import type { Signal, SignalCategory, SignalDistrictExpanded } from "@/types/database";
@@ -42,6 +44,9 @@ export interface SignalCardProps {
   is_bookmarked: boolean;
   onBookmarkToggle: () => void;
   onMarkRead: () => void;
+  /** When set, shows “Generate insight” for matches that only have vector scores (no blurb yet). */
+  onGenerateInsight?: () => void | Promise<void>;
+  insightLoading?: boolean;
 }
 
 export function SignalCard({
@@ -54,12 +59,19 @@ export function SignalCard({
   is_bookmarked,
   onBookmarkToggle,
   onMarkRead,
+  onGenerateInsight,
+  insightLoading = false,
 }: SignalCardProps) {
   const category = signal.signal_category;
   const displayDate = signal.published_at ?? signal.created_at;
   const categoryConfig = category
     ? SIGNAL_CATEGORY_CONFIG[category]
     : { label: "Other", color: "text-muted-foreground", bgColor: "bg-muted/50 border-muted" };
+
+  const needsInsight =
+    !why_it_matters?.trim() &&
+    !action_suggestion?.trim() &&
+    Boolean(onGenerateInsight);
 
   return (
     <article
@@ -132,6 +144,34 @@ export function SignalCard({
             </p>
           )}
         </div>
+
+        {needsInsight && (
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed bg-muted/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Personalized “why this matters” and suggested action are not generated yet.
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="shrink-0 gap-1.5"
+              disabled={insightLoading}
+              onClick={() => void onGenerateInsight?.()}
+            >
+              {insightLoading ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-3.5" />
+                  Generate insight
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         {/* Why This Matters */}
         {why_it_matters && (

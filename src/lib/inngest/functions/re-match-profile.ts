@@ -1,14 +1,7 @@
-import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { inngest } from "@/lib/inngest/client";
 import { createServiceClient } from "@/lib/supabase/server";
-import { buildMatchPrompt } from "@/lib/ai/prompts";
-import { signalMatchInsightSchema } from "@/types/schemas";
 import type { Events } from "@/lib/inngest/types";
-import type { Signal, SignalProfile } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-const RELEVANCE_THRESHOLD = 0.4;
 
 async function runWasCancelled(
   supabase: SupabaseClient,
@@ -177,7 +170,7 @@ export const reMatchProfile = inngest.createFunction(
       return { processed: 0, error: "Profile not found" };
     }
 
-    const embedding = (profile as SignalProfile).profile_embedding;
+    const embedding = profile.profile_embedding;
     if (!embedding?.length) {
       await markRematchFailed(supabase, userId, "Profile has no embedding.", runId);
       return { processed: 0, error: "Profile has no embedding" };
@@ -231,101 +224,81 @@ export const reMatchProfile = inngest.createFunction(
       updated: 0,
     });
 
-    for (let i = 0; i < matches.length; i++) {
-      const m = matches[i] as { signal_id: string; similarity: number };
-      const stepResult = await step.run(`re-match-signal-${i}-${m.signal_id}`, async () => {
-        if (await runWasCancelled(supabase, runId, userId)) {
-          return { cancelled: true as const };
-        }
+    const batchResult = await step.run("apply-profile-vector-matches", async () => {
+      if (await runWasCancelled(supabase, runId, userId)) {
+        return { cancelled: true as const, inserted: 0, updated: 0 };
+      }
 
-        const { data: runRow } = await supabase
-          .from("profile_rematch_runs")
-          .select("inserted, updated")
-          .eq("id", runId)
-          .single();
+      let inserted = 0;
+      let updated = 0;
 
-        const prevIns = runRow?.inserted ?? 0;
-        const prevUp = runRow?.updated ?? 0;
+      for (const raw of matches) {
+        const m = raw as { signal_id: string; similarity: number };
 
         const { data: signal, error: signalError } = await supabase
           .from("signals")
-          .select("*")
+          .select("id")
           .eq("id", m.signal_id)
-          .single();
+          .maybeSingle();
 
-        let newIns = prevIns;
-        let newUp = prevUp;
+        if (signalError || !signal) continue;
 
-        if (!signalError && signal) {
-          const result = await generateObject({
-            model: openai("gpt-4o-mini"),
-            schema: signalMatchInsightSchema,
-            prompt: buildMatchPrompt(signal as Signal, profile as SignalProfile),
+        const { data: existing } = await supabase
+          .from("signal_matches")
+          .select("id")
+          .eq("signal_id", m.signal_id)
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("signal_matches")
+            .update({ relevance_score: m.similarity })
+            .eq("id", existing.id);
+          updated += 1;
+        } else {
+          await supabase.from("signal_matches").insert({
+            signal_id: m.signal_id,
+            user_id: userId,
+            relevance_score: m.similarity,
+            why_it_matters: null,
+            action_suggestion: null,
           });
-
-          const insight = result.object;
-          if (insight.relevance_score >= RELEVANCE_THRESHOLD) {
-            const { data: existing } = await supabase
-              .from("signal_matches")
-              .select("id, is_read, is_bookmarked")
-              .eq("signal_id", m.signal_id)
-              .eq("user_id", userId)
-              .maybeSingle();
-
-            if (existing) {
-              await supabase
-                .from("signal_matches")
-                .update({
-                  relevance_score: insight.relevance_score,
-                  why_it_matters: insight.why_it_matters,
-                  action_suggestion: insight.action_suggestion,
-                })
-                .eq("id", existing.id);
-              newUp = prevUp + 1;
-            } else {
-              await supabase.from("signal_matches").insert({
-                signal_id: m.signal_id,
-                user_id: userId,
-                relevance_score: insight.relevance_score,
-                why_it_matters: insight.why_it_matters,
-                action_suggestion: insight.action_suggestion,
-              });
-              newIns = prevIns + 1;
-            }
-          }
+          inserted += 1;
         }
+      }
 
-        await persistRematchProgress(supabase, runId, userId, {
-          candidatesTotal: total,
-          processed: i + 1,
-          inserted: newIns,
-          updated: newUp,
-        });
-
-        return { cancelled: false as const };
+      await persistRematchProgress(supabase, runId, userId, {
+        candidatesTotal: total,
+        processed: matches.length,
+        inserted,
+        updated,
       });
 
-      if (
-        stepResult &&
-        typeof stepResult === "object" &&
-        "cancelled" in stepResult &&
-        (stepResult as { cancelled?: boolean }).cancelled
-      ) {
-        break;
-      }
+      return { cancelled: false as const, inserted, updated };
+    });
+
+    if (
+      batchResult &&
+      typeof batchResult === "object" &&
+      "cancelled" in batchResult &&
+      batchResult.cancelled
+    ) {
+      return { processed: matches.length, skipped: "cancelled" };
     }
 
     if (await runWasCancelled(supabase, runId, userId)) {
       return { processed: matches.length, skipped: "cancelled" };
     }
 
-    const { data: finalRow } = await supabase
-      .from("profile_rematch_runs")
-      .select("inserted, updated")
-      .eq("id", runId)
-      .single();
-    const inserted = finalRow?.inserted ?? 0;
-    const updated = finalRow?.updated ?? 0;
+    const inserted =
+      batchResult && typeof batchResult === "object" && "inserted" in batchResult
+        ? (batchResult as { inserted: number }).inserted
+        : 0;
+    const updated =
+      batchResult && typeof batchResult === "object" && "updated" in batchResult
+        ? (batchResult as { updated: number }).updated
+        : 0;
 
     await markRematchCompleted(
       supabase,

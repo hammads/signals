@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ReMatchButton } from "@/components/dashboard/re-match-button";
 import { ScanHistoryTable } from "@/components/dashboard/scan-history-table";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   cancelRematchRun,
   fetchRematchRuns,
@@ -15,6 +24,7 @@ export function ScanHistoryView({ initialRuns }: { initialRuns: RematchRunListRo
   const router = useRouter();
   const [runs, setRuns] = useState<RematchRunListRow[]>(initialRuns);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmCancelRunId, setConfirmCancelRunId] = useState<string | null>(null);
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -42,11 +52,16 @@ export function ScanHistoryView({ initialRuns }: { initialRuns: RematchRunListRo
     return () => window.clearInterval(id);
   }, [hasRunning, refreshRuns]);
 
-  const handleCancel = useCallback(
+  const requestCancel = useCallback((runId: string) => {
+    setConfirmCancelRunId(runId);
+  }, []);
+
+  const performCancel = useCallback(
     async (runId: string) => {
       setCancellingId(runId);
       try {
         await cancelRematchRun(runId);
+        setConfirmCancelRunId(null);
         toast.success("Scan cancelled.");
         await refreshRuns();
         router.refresh();
@@ -76,9 +91,42 @@ export function ScanHistoryView({ initialRuns }: { initialRuns: RematchRunListRo
 
       <ScanHistoryTable
         runs={runs}
-        onCancelRun={handleCancel}
+        onCancelRun={requestCancel}
         cancellingRunId={cancellingId}
       />
+
+      <Dialog
+        open={confirmCancelRunId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmCancelRunId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel this scan?</DialogTitle>
+            <DialogDescription>
+              The in-progress rematch will stop. You can start a new scan later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={cancellingId !== null}
+              onClick={() => setConfirmCancelRunId(null)}
+            >
+              Keep running
+            </Button>
+            <Button
+              disabled={cancellingId !== null}
+              onClick={() => {
+                if (confirmCancelRunId) void performCancel(confirmCancelRunId);
+              }}
+            >
+              {cancellingId ? "Stopping…" : "Stop scan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

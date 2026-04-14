@@ -103,4 +103,19 @@ describe("SignalCard", () => {
       "https://example.com/rfp"
     );
   });
+
+  it("shows Generate insight when blurbs are missing and handler is provided", () => {
+    const onGenerateInsight = vi.fn();
+    render(
+      <SignalCard
+        {...defaultProps}
+        why_it_matters={null}
+        action_suggestion={null}
+        onGenerateInsight={onGenerateInsight}
+      />,
+      { wrapper: Wrapper }
+    );
+    fireEvent.click(screen.getByRole("button", { name: /generate insight/i }));
+    expect(onGenerateInsight).toHaveBeenCalledTimes(1);
+  });
 });
