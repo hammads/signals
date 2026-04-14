@@ -35,6 +35,27 @@ export async function POST() {
     }
 
     const startedAt = new Date().toISOString();
+
+    const { data: runRow, error: runInsertError } = await supabase
+      .from("profile_rematch_runs")
+      .insert({
+        user_id: user.id,
+        status: "running",
+        started_at: startedAt,
+      })
+      .select("id")
+      .single();
+
+    if (runInsertError || !runRow?.id) {
+      console.error("Failed to create profile_rematch_runs row:", runInsertError);
+      return NextResponse.json(
+        { error: "Could not start scan" },
+        { status: 500 }
+      );
+    }
+
+    const runId = runRow.id as string;
+
     const { error: updateError } = await supabase
       .from("signal_profiles")
       .update({
@@ -50,6 +71,15 @@ export async function POST() {
 
     if (updateError) {
       console.error("Failed to mark rematch running:", updateError);
+      await supabase
+        .from("profile_rematch_runs")
+        .update({
+          status: "failed",
+          finished_at: new Date().toISOString(),
+          error_message: "Could not start scan",
+        })
+        .eq("id", runId)
+        .eq("user_id", user.id);
       return NextResponse.json(
         { error: "Could not start scan" },
         { status: 500 }
@@ -59,17 +89,28 @@ export async function POST() {
     try {
       await inngest.send({
         name: "profile/re-match.requested",
-        data: { userId: user.id },
+        data: { userId: user.id, runId },
       });
     } catch (sendErr) {
       console.error("Failed to queue scan:", sendErr);
+      const finishedAt = new Date().toISOString();
+      const queueError = "Could not queue scan. Try again shortly.";
       await supabase
         .from("signal_profiles")
         .update({
           rematch_status: "failed",
-          rematch_finished_at: new Date().toISOString(),
-          rematch_error: "Could not queue scan. Try again shortly.",
+          rematch_finished_at: finishedAt,
+          rematch_error: queueError,
         })
+        .eq("user_id", user.id);
+      await supabase
+        .from("profile_rematch_runs")
+        .update({
+          status: "failed",
+          finished_at: finishedAt,
+          error_message: queueError,
+        })
+        .eq("id", runId)
         .eq("user_id", user.id);
       return NextResponse.json(
         { error: "Could not queue scan. Try again shortly." },

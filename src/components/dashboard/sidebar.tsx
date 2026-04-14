@@ -10,6 +10,7 @@ import {
   LogOut,
   Satellite,
   BookOpen,
+  History,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/database";
@@ -34,6 +35,7 @@ import { useSidebar } from "./sidebar-context";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Signal Feed", icon: Radio },
+  { href: "/scan-history", label: "Scan history", icon: History },
   { href: "/digests", label: "Digests", icon: FileStack },
   { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/settings", label: "Settings", icon: Settings },

@@ -10,6 +10,49 @@ export type RematchStatusPayload = {
   updated: number | null;
 };
 
+export type RematchStatusBadgeVariant = "default" | "secondary" | "destructive" | "outline";
+
+export function getRematchStatusLabel(
+  status: RematchStatusPayload["status"]
+): string {
+  switch (status) {
+    case "running":
+      return "Running";
+    case "failed":
+      return "Failed";
+    case "completed":
+      return "Completed";
+    default:
+      return "Not run yet";
+  }
+}
+
+export function getRematchStatusBadgeVariant(
+  status: RematchStatusPayload["status"]
+): RematchStatusBadgeVariant {
+  switch (status) {
+    case "running":
+      return "default";
+    case "failed":
+      return "destructive";
+    case "completed":
+      return "secondary";
+    default:
+      return "outline";
+  }
+}
+
+/** Localized date/time for dashboard display; returns an em dash when missing or invalid. */
+export function formatRematchDateTime(iso: string | null | undefined): string {
+  if (iso == null || iso === "") return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(d);
+}
+
 export function formatRematchSummary(p: RematchStatusPayload): string {
   if (p.status === "failed") {
     return p.error ? `Last scan failed: ${p.error}` : "Last scan failed.";

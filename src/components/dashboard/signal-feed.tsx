@@ -20,10 +20,8 @@ import type { SignalMatchWithSignal, SignalCategory, SignalDistrictExpanded } fr
 import { cn } from "@/lib/utils";
 import { US_STATES } from "@/types/schemas";
 import { ReMatchButton } from "@/components/dashboard/re-match-button";
-import {
-  formatRematchSummary,
-  type RematchStatusPayload,
-} from "@/lib/rematch-status";
+import { RematchStatusPanel } from "@/components/dashboard/rematch-status-panel";
+import type { RematchStatusPayload } from "@/lib/rematch-status";
 
 const CATEGORY_PILLS: { value: "" | SignalCategory; label: string }[] = [
   { value: "", label: "All" },
@@ -130,8 +128,6 @@ export function SignalFeed({
   const hasNext = page < totalPages;
   const hasPrev = page > 1;
 
-  const rematchSummaryLine = formatRematchSummary(initialRematchStatus);
-
   const validMatches = initialMatches.filter(
     (match): match is typeof match & { signal: NonNullable<typeof match.signal> } =>
       match.signal != null
@@ -144,14 +140,7 @@ export function SignalFeed({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm text-muted-foreground">
-            Scan existing signals against your profile after you make changes on My Profile.
-          </p>
-          {rematchSummaryLine ? (
-            <p className="text-muted-foreground text-xs">{rematchSummaryLine}</p>
-          ) : null}
-        </div>
+        <RematchStatusPanel initialRematchStatus={initialRematchStatus} />
         <ReMatchButton disabled={!canRescan} className="shrink-0" />
       </div>
 

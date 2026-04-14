@@ -17,7 +17,8 @@ async function markRematchCompleted(
     signalsConsidered: number;
     inserted: number;
     updated: number;
-  }
+  },
+  runId: string
 ) {
   await supabase
     .from("signal_profiles")
@@ -30,9 +31,31 @@ async function markRematchCompleted(
       rematch_updated: summary.updated,
     })
     .eq("user_id", userId);
+
+  const finishedAt = new Date().toISOString();
+  const { error: runErr } = await supabase
+    .from("profile_rematch_runs")
+    .update({
+      status: "completed",
+      finished_at: finishedAt,
+      error_message: null,
+      signals_considered: summary.signalsConsidered,
+      inserted: summary.inserted,
+      updated: summary.updated,
+    })
+    .eq("id", runId)
+    .eq("user_id", userId);
+  if (runErr) {
+    console.error("Failed to finalize profile_rematch_runs row:", runErr);
+  }
 }
 
-async function markRematchFailed(supabase: SupabaseClient, userId: string, message: string) {
+async function markRematchFailed(
+  supabase: SupabaseClient,
+  userId: string,
+  message: string,
+  runId: string
+) {
   await supabase
     .from("signal_profiles")
     .update({
@@ -41,6 +64,20 @@ async function markRematchFailed(supabase: SupabaseClient, userId: string, messa
       rematch_error: message,
     })
     .eq("user_id", userId);
+
+  const finishedAt = new Date().toISOString();
+  const { error: runErr } = await supabase
+    .from("profile_rematch_runs")
+    .update({
+      status: "failed",
+      finished_at: finishedAt,
+      error_message: message,
+    })
+    .eq("id", runId)
+    .eq("user_id", userId);
+  if (runErr) {
+    console.error("Failed to mark profile_rematch_runs failed:", runErr);
+  }
 }
 
 export const reMatchProfile = inngest.createFunction(
@@ -50,22 +87,31 @@ export const reMatchProfile = inngest.createFunction(
     onFailure: async ({ event, error }) => {
       const supabase = await createServiceClient();
       const original = event.data.event as {
-        data?: { userId?: string };
+        data?: { userId?: string; runId?: string };
       };
       const userId = original?.data?.userId;
+      const runId = original?.data?.runId;
       if (!userId) return;
-      await markRematchFailed(
-        supabase,
-        userId,
-        error.message ?? "Scan failed after retries"
-      );
+      const message = error.message ?? "Scan failed after retries";
+      if (runId) {
+        await markRematchFailed(supabase, userId, message, runId);
+        return;
+      }
+      await supabase
+        .from("signal_profiles")
+        .update({
+          rematch_status: "failed",
+          rematch_finished_at: new Date().toISOString(),
+          rematch_error: message,
+        })
+        .eq("user_id", userId);
     },
   },
   { event: "profile/re-match.requested" },
   async ({ event, step }) => {
-    const { userId } = event.data as Events["profile/re-match.requested"]["data"];
-    if (!userId) {
-      return { processed: 0, error: "Missing userId" };
+    const { userId, runId } = event.data as Events["profile/re-match.requested"]["data"];
+    if (!userId || !runId) {
+      return { processed: 0, error: "Missing userId or runId" };
     }
 
     const supabase = await createServiceClient();
@@ -77,13 +123,13 @@ export const reMatchProfile = inngest.createFunction(
       .single();
 
     if (profileError || !profile) {
-      await markRematchFailed(supabase, userId, "Profile not found.");
+      await markRematchFailed(supabase, userId, "Profile not found.", runId);
       return { processed: 0, error: "Profile not found" };
     }
 
     const embedding = (profile as SignalProfile).profile_embedding;
     if (!embedding?.length) {
-      await markRematchFailed(supabase, userId, "Profile has no embedding.");
+      await markRematchFailed(supabase, userId, "Profile has no embedding.", runId);
       return { processed: 0, error: "Profile has no embedding" };
     }
 
@@ -93,7 +139,7 @@ export const reMatchProfile = inngest.createFunction(
         ? embedding
         : null;
     if (!embeddingStr) {
-      await markRematchFailed(supabase, userId, "Invalid profile embedding.");
+      await markRematchFailed(supabase, userId, "Invalid profile embedding.", runId);
       return { processed: 0, error: "Invalid profile embedding" };
     }
 
@@ -115,7 +161,7 @@ export const reMatchProfile = inngest.createFunction(
         signalsConsidered: 0,
         inserted: 0,
         updated: 0,
-      });
+      }, runId);
       return { processed: 0, inserted: 0, updated: 0, signalIds: [] };
     }
 
@@ -175,7 +221,7 @@ export const reMatchProfile = inngest.createFunction(
       signalsConsidered: matches.length,
       inserted,
       updated,
-    });
+    }, runId);
 
     return { processed: matches.length, inserted, updated };
   }

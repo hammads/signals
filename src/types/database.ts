@@ -40,6 +40,20 @@ export interface Profile {
 
 export type RematchJobStatus = "running" | "completed" | "failed";
 
+/** One row per “Scan again” job; see profile_rematch_runs table. */
+export interface ProfileRematchRun {
+  id: string;
+  user_id: string;
+  status: RematchJobStatus;
+  error_message: string | null;
+  signals_considered: number | null;
+  inserted: number | null;
+  updated: number | null;
+  started_at: string;
+  finished_at: string | null;
+  created_at: string;
+}
+
 export interface SignalProfile {
   id: string;
   user_id: string;
@@ -193,6 +207,11 @@ export interface Database {
         Row: PipelineRun;
         Insert: Partial<PipelineRun>;
         Update: Partial<PipelineRun>;
+      };
+      profile_rematch_runs: {
+        Row: ProfileRematchRun;
+        Insert: Partial<ProfileRematchRun> & { user_id: string };
+        Update: Partial<ProfileRematchRun>;
       };
       lea_directory: {
         Row: LeaDirectory;

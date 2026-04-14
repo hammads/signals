@@ -89,23 +89,47 @@ describe("POST /api/profiles/re-match", () => {
   });
 
   it("queues scan when profile has embedding", async () => {
-    const chain = mockSupabase.from();
-    chain.single.mockResolvedValue({
+    const runChain = {
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: "run-1" },
+            error: null,
+          }),
+        }),
+      }),
+    };
+    const profileChain: Record<string, unknown> = {};
+    profileChain.select = vi.fn().mockReturnValue(profileChain);
+    profileChain.eq = vi.fn().mockReturnValue(profileChain);
+    profileChain.single = vi.fn().mockResolvedValue({
       data: {
         id: "sp-1",
         profile_embedding: new Array(10).fill(0.1),
       },
       error: null,
     });
-    chain.update.mockImplementation(() => ({
+    profileChain.update = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ error: null }),
-    }));
+    });
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "profile_rematch_runs") return runChain;
+      if (table === "signal_profiles") return profileChain;
+      return profileChain;
+    });
 
     const response = await POST_REMATCH();
     const data = await response.json();
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockSend).toHaveBeenCalled();
-    expect(chain.update).toHaveBeenCalled();
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "profile/re-match.requested",
+        data: { userId: mockUser.id, runId: "run-1" },
+      })
+    );
+    expect(runChain.insert).toHaveBeenCalled();
+    expect(profileChain.update).toHaveBeenCalled();
   });
 });

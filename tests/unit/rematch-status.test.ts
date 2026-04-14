@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { formatRematchSummary } from "@/lib/rematch-status";
+import {
+  formatRematchDateTime,
+  formatRematchSummary,
+  getRematchStatusBadgeVariant,
+  getRematchStatusLabel,
+} from "@/lib/rematch-status";
 import type { RematchStatusPayload } from "@/lib/rematch-status";
 
 describe("formatRematchSummary", () => {
@@ -57,5 +62,41 @@ describe("formatRematchSummary", () => {
       updated: null,
     };
     expect(formatRematchSummary(p)).toBe("Scan in progress…");
+  });
+});
+
+describe("getRematchStatusLabel", () => {
+  it("maps known statuses", () => {
+    expect(getRematchStatusLabel("running")).toBe("Running");
+    expect(getRematchStatusLabel("failed")).toBe("Failed");
+    expect(getRematchStatusLabel("completed")).toBe("Completed");
+    expect(getRematchStatusLabel(null)).toBe("Not run yet");
+  });
+});
+
+describe("getRematchStatusBadgeVariant", () => {
+  it("maps statuses to badge variants", () => {
+    expect(getRematchStatusBadgeVariant("running")).toBe("default");
+    expect(getRematchStatusBadgeVariant("failed")).toBe("destructive");
+    expect(getRematchStatusBadgeVariant("completed")).toBe("secondary");
+    expect(getRematchStatusBadgeVariant(null)).toBe("outline");
+  });
+});
+
+describe("formatRematchDateTime", () => {
+  it("returns em dash for empty input", () => {
+    expect(formatRematchDateTime(null)).toBe("—");
+    expect(formatRematchDateTime(undefined)).toBe("—");
+    expect(formatRematchDateTime("")).toBe("—");
+  });
+
+  it("returns em dash for invalid dates", () => {
+    expect(formatRematchDateTime("not-a-date")).toBe("—");
+  });
+
+  it("formats valid ISO timestamps", () => {
+    const s = formatRematchDateTime("2026-06-15T14:30:00.000Z");
+    expect(s).not.toBe("—");
+    expect(s.length).toBeGreaterThan(4);
   });
 });

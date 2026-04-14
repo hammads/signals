@@ -9,6 +9,6 @@ export type Events = {
     data: { signalIds: string[] };
   };
   "profile/re-match.requested": {
-    data: { userId: string };
+    data: { userId: string; runId: string };
   };
 };

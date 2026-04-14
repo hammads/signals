@@ -9,6 +9,7 @@ import { DashboardHeader } from "./header";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Signal Feed",
+  "/scan-history": "Scan history",
   "/digests": "Digests",
   "/onboarding": "Get Started",
   "/profile": "My Profile",
