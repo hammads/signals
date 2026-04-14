@@ -75,7 +75,9 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                           <Checkbox
                             checked={(field.value?.length ?? 0) === 0}
                             onCheckedChange={(checked) => {
-                              field.onChange(checked ? [] : []);
+                              field.onChange(
+                                checked ? [] : [...DISTRICT_TYPES]
+                              );
                             }}
                           />
                         </FormControl>
@@ -178,7 +180,9 @@ export function StepMarket({ data, onChange, onNext, onBack }: StepMarketProps) 
                           <Checkbox
                             checked={(field.value?.length ?? 0) === 0}
                             onCheckedChange={(checked) => {
-                              field.onChange(checked ? [] : []);
+                              field.onChange(
+                                checked ? [] : [...US_STATES]
+                              );
                             }}
                           />
                         </FormControl>

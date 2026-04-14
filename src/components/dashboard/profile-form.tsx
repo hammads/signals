@@ -44,7 +44,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { requestProfileRematch } from "@/lib/profile-rematch";
+import {
+  pollRematchUntilTerminal,
+  requestProfileRematch,
+  toastRematchOutcome,
+} from "@/lib/profile-rematch";
 import type { SignalProfile } from "@/types/database";
 
 const DISTRICT_SIZE_LABELS: Record<(typeof DISTRICT_SIZES)[number], string> = {
@@ -112,6 +116,15 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       toast.success(result.message);
       setRescanDialogOpen(false);
       router.refresh();
+      void (async () => {
+        try {
+          const final = await pollRematchUntilTerminal();
+          toastRematchOutcome(final, toast);
+          router.refresh();
+        } catch {
+          toast.message("Could not confirm scan status — refresh the page later.");
+        }
+      })();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -247,7 +260,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                               <Checkbox
                                 checked={(field.value?.length ?? 0) === 0}
                                 onCheckedChange={(checked) => {
-                                  field.onChange(checked ? [] : []);
+                                  field.onChange(
+                                    checked ? [] : [...DISTRICT_TYPES]
+                                  );
                                 }}
                               />
                             </FormControl>
@@ -348,7 +363,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                               <Checkbox
                                 checked={(field.value?.length ?? 0) === 0}
                                 onCheckedChange={(checked) => {
-                                  field.onChange(checked ? [] : []);
+                                  field.onChange(
+                                    checked ? [] : [...US_STATES]
+                                  );
                                 }}
                               />
                             </FormControl>

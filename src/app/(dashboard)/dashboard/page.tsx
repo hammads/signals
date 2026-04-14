@@ -5,7 +5,8 @@ import {
 } from "@/lib/districts/expand-nested-districts";
 import { signalMatchesSelect } from "@/lib/supabase/signal-match-select";
 import { SignalFeed } from "@/components/dashboard/signal-feed";
-import type { SignalCategory, SignalMatch } from "@/types/database";
+import type { RematchStatusPayload } from "@/lib/rematch-status";
+import type { SignalCategory, SignalMatch, SignalProfile } from "@/types/database";
 
 const PAGE_SIZE = 20;
 
@@ -50,11 +51,34 @@ export default async function DashboardPage({
 
   const { data: signalProfileRow } = await supabase
     .from("signal_profiles")
-    .select("profile_embedding")
+    .select(
+      "profile_embedding, rematch_status, rematch_started_at, rematch_finished_at, rematch_error, rematch_signals_considered, rematch_inserted, rematch_updated"
+    )
     .eq("user_id", user.id)
     .maybeSingle();
 
   const canRescan = Boolean(signalProfileRow?.profile_embedding?.length);
+
+  const sp = signalProfileRow as Pick<
+    SignalProfile,
+    | "rematch_status"
+    | "rematch_started_at"
+    | "rematch_finished_at"
+    | "rematch_error"
+    | "rematch_signals_considered"
+    | "rematch_inserted"
+    | "rematch_updated"
+  > | null;
+
+  const initialRematchStatus: RematchStatusPayload = {
+    status: sp?.rematch_status as RematchStatusPayload["status"],
+    startedAt: sp?.rematch_started_at ?? null,
+    finishedAt: sp?.rematch_finished_at ?? null,
+    error: sp?.rematch_error ?? null,
+    signalsConsidered: sp?.rematch_signals_considered ?? null,
+    inserted: sp?.rematch_inserted ?? null,
+    updated: sp?.rematch_updated ?? null,
+  };
 
   if (error) {
     return (
@@ -79,6 +103,7 @@ export default async function DashboardPage({
       initialCategory={category}
       initialRegion={region ?? undefined}
       canRescan={canRescan}
+      initialRematchStatus={initialRematchStatus}
     />
   );
 }

@@ -30,6 +30,13 @@ const mockProfile: SignalProfile = {
   competitor_names: [],
   bellwether_districts: ["Austin ISD"],
   profile_embedding: null,
+  rematch_status: null,
+  rematch_started_at: null,
+  rematch_finished_at: null,
+  rematch_error: null,
+  rematch_signals_considered: null,
+  rematch_inserted: null,
+  rematch_updated: null,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-01T00:00:00Z",
 };

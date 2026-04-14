@@ -38,6 +38,8 @@ export interface Profile {
   created_at: string;
 }
 
+export type RematchJobStatus = "running" | "completed" | "failed";
+
 export interface SignalProfile {
   id: string;
   user_id: string;
@@ -51,6 +53,13 @@ export interface SignalProfile {
   competitor_names: string[];
   bellwether_districts: string[];
   profile_embedding: number[] | null;
+  rematch_status: RematchJobStatus | null;
+  rematch_started_at: string | null;
+  rematch_finished_at: string | null;
+  rematch_error: string | null;
+  rematch_signals_considered: number | null;
+  rematch_inserted: number | null;
+  rematch_updated: number | null;
   created_at: string;
   updated_at: string;
 }

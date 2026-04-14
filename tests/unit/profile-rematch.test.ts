@@ -10,7 +10,11 @@ describe("requestProfileRematch", () => {
       vi.fn(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ message: "Scan started" }),
+          json: () =>
+            Promise.resolve({
+              message:
+                "Scan queued. Your feed will update when processing finishes — you will see a confirmation here.",
+            }),
         } as Response)
       )
     );
@@ -23,7 +27,8 @@ describe("requestProfileRematch", () => {
 
   it("POSTs to re-match and returns success with message", async () => {
     const result = await requestProfileRematch();
-    expect(result).toEqual({ ok: true, message: "Scan started" });
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.message).toContain("Scan queued");
     expect(fetch).toHaveBeenCalledWith("/api/profiles/re-match", {
       method: "POST",
     });
