@@ -12,18 +12,12 @@ import {
 } from "@/lib/profile-rematch";
 import { cn } from "@/lib/utils";
 
-export function ReMatchButton({
-  disabled,
-  className,
-}: {
-  disabled?: boolean;
-  className?: string;
-}) {
-  const [loading, setLoading] = useState(false);
+export function ReMatchButton({ className }: { className?: string }) {
+  const [requestInFlight, setRequestInFlight] = useState(false);
   const router = useRouter();
 
   const handleClick = async () => {
-    setLoading(true);
+    setRequestInFlight(true);
     try {
       const result = await requestProfileRematch();
       if (!result.ok) {
@@ -43,19 +37,20 @@ export function ReMatchButton({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
-      setLoading(false);
+      setRequestInFlight(false);
     }
   };
 
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="default"
       className={cn(className)}
       onClick={handleClick}
-      disabled={disabled ?? loading}
+      disabled={requestInFlight}
+      aria-busy={requestInFlight}
     >
-      {loading ? (
+      {requestInFlight ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Scanning…

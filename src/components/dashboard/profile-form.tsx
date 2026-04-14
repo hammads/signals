@@ -135,7 +135,11 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   return (
     <Form {...form}>
       <Dialog open={rescanDialogOpen} onOpenChange={setRescanDialogOpen}>
-        <DialogContent showCloseButton={!rescanLoading}>
+        <DialogContent
+          showCloseButton={!rescanLoading}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Rescan existing signals?</DialogTitle>
             <DialogDescription>
