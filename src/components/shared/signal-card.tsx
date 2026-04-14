@@ -30,10 +30,20 @@ const CATEGORY_LABELS: Record<SignalCategory, string> = {
   icp_finder: "ICP Contact",
 };
 
+function getSourceLabel(signal: SignalCardProps["signal"]): string | null {
+  const meta = signal.metadata;
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return null;
+  const m = meta as Record<string, unknown>;
+  if (m.parentSourceName && typeof m.parentSourceName === "string")
+    return m.parentSourceName;
+  if (m.feedTitle && typeof m.feedTitle === "string") return m.feedTitle;
+  return null;
+}
+
 export interface SignalCardProps {
   signal: Pick<
     Signal,
-    "title" | "source_url" | "signal_category" | "region" | "published_at" | "created_at"
+    "title" | "source_url" | "signal_category" | "region" | "published_at" | "created_at" | "metadata"
   >;
   districts?: Pick<SignalDistrictExpanded, "lea_id" | "district_name" | "district_state" | "district_label">[];
   relevance_score: number | null;
@@ -63,6 +73,7 @@ export function SignalCard({
 }: SignalCardProps) {
   const category = signal.signal_category;
   const displayDate = signal.published_at ?? signal.created_at;
+  const sourceLabel = getSourceLabel(signal);
   const categoryConfig = category
     ? SIGNAL_CATEGORY_CONFIG[category]
     : { label: "Other", color: "text-muted-foreground", bgColor: "bg-muted/50 border-muted" };
@@ -134,12 +145,14 @@ export function SignalCard({
             </a>
           </h3>
 
-          {displayDate && (
+          {(displayDate || sourceLabel) && (
             <p
               className="text-xs text-muted-foreground"
               suppressHydrationWarning
             >
-              {relativeDate(displayDate)}
+              {displayDate ? relativeDate(displayDate) : ""}
+              {displayDate && sourceLabel ? " · " : ""}
+              {sourceLabel ? `via ${sourceLabel}` : ""}
             </p>
           )}
         </div>

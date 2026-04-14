@@ -31,8 +31,8 @@ import { updateDataSourceActive, deleteDataSource } from "@/lib/supabase/admin-a
 import { toast } from "sonner";
 import type { DataSource } from "@/types/database";
 
-const SCANNABLE_TYPES = ["rss", "ai_search"] as const;
-const UNSUPPORTED_TYPES = ["api", "scrape"] as const;
+const SCANNABLE_TYPES = ["rss", "ai_search", "scrape"] as const;
+const UNSUPPORTED_TYPES = ["api"] as const;
 
 interface DataSourcesTableProps {
   dataSources: DataSource[];

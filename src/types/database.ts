@@ -157,7 +157,7 @@ export interface DataSource {
   created_at: string;
 }
 
-export type PipelineType = "rss" | "ai_search" | "sam_gov";
+export type PipelineType = "rss" | "ai_search" | "sam_gov" | "scrape";
 
 export interface PipelineRun {
   id: string;

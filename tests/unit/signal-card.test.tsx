@@ -28,6 +28,7 @@ const mockSignal = {
   region: "TX",
   published_at: "2025-02-17T00:00:00Z",
   created_at: "2025-02-17T00:00:00Z",
+  metadata: {},
 };
 
 const defaultProps = {
@@ -133,5 +134,35 @@ describe("SignalCard", () => {
     expect(
       screen.getByText(/generating personalized insight/i)
     ).toBeInTheDocument();
+  });
+
+  it("shows 'via' source label from RSS metadata feedTitle", () => {
+    render(
+      <SignalCard
+        {...defaultProps}
+        signal={{ ...mockSignal, metadata: { feedTitle: "EdWeek RSS" } }}
+      />,
+      { wrapper: Wrapper }
+    );
+    expect(screen.getByText(/via EdWeek RSS/)).toBeInTheDocument();
+  });
+
+  it("shows 'via' source label from scrape metadata parentSourceName", () => {
+    render(
+      <SignalCard
+        {...defaultProps}
+        signal={{
+          ...mockSignal,
+          metadata: { parentSourceName: "HigherGov K-12 Bids" },
+        }}
+      />,
+      { wrapper: Wrapper }
+    );
+    expect(screen.getByText(/via HigherGov K-12 Bids/)).toBeInTheDocument();
+  });
+
+  it("does not show 'via' when metadata has no source label", () => {
+    render(<SignalCard {...defaultProps} />, { wrapper: Wrapper });
+    expect(screen.queryByText(/via /)).not.toBeInTheDocument();
   });
 });

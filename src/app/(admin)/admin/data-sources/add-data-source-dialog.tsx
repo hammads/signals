@@ -23,7 +23,7 @@ import { createDataSource } from "@/lib/supabase/admin-actions";
 import type { DataSourceType } from "@/types/database";
 import type { DataSourceSuggestion } from "@/app/api/admin/data-sources/suggest/route";
 
-const SUPPORTED_SOURCE_TYPES: DataSourceType[] = ["rss", "ai_search"];
+const SUPPORTED_SOURCE_TYPES: DataSourceType[] = ["rss", "ai_search", "scrape"];
 
 type DialogMode = "manual" | "discover";
 
@@ -255,6 +255,32 @@ export function AddDataSourceDialog() {
                 placeholder="K-12 education grants 2026"
               />
             </div>
+          )}
+          {sourceType === "scrape" && (
+            <>
+              <div className="space-y-2">
+                <Label>Listing page URL</Label>
+                <Input
+                  value={(config as { url?: string })?.url ?? ""}
+                  onChange={(e) => setConfig({ ...config, url: e.target.value })}
+                  placeholder="https://www.highergov.com/k12-bids/"
+                />
+                <p className="text-xs text-muted-foreground">
+                  URL of a directory or listing page. Individual items will be extracted automatically.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Category hint (optional)</Label>
+                <Input
+                  value={(config as { category_hint?: string })?.category_hint ?? ""}
+                  onChange={(e) => setConfig({ ...config, category_hint: e.target.value })}
+                  placeholder="e.g. rfp, grant, news"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Helps classify items when titles are ambiguous.
+                </p>
+              </div>
+            </>
           )}
           <div className="space-y-2">
             <Label htmlFor="scan_frequency_hours">Scan frequency (hours)</Label>

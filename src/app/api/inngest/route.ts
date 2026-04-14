@@ -3,6 +3,8 @@ import { inngest } from "@/lib/inngest/client";
 import { scanRSS } from "@/lib/inngest/functions/scan-rss";
 import { scanSamGov } from "@/lib/inngest/functions/scan-sam-gov";
 import { scanAISearch } from "@/lib/inngest/functions/scan-ai-search";
+import { scanScrape } from "@/lib/inngest/functions/scan-scrape";
+import { promoteListingSignals } from "@/lib/inngest/functions/promote-listing-signals";
 import { enrichSignalDistricts } from "@/lib/inngest/functions/enrich-signal-districts";
 import { generateEmbeddings } from "@/lib/inngest/functions/generate-embeddings";
 import { summarizeSignals } from "@/lib/inngest/functions/summarize-signals";
@@ -16,6 +18,8 @@ export const { GET, POST, PUT } = serve({
     scanRSS,
     scanSamGov,
     scanAISearch,
+    scanScrape,
+    promoteListingSignals,
     enrichSignalDistricts,
     generateEmbeddings,
     summarizeSignals,

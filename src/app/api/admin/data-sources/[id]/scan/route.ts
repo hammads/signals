@@ -28,7 +28,7 @@ async function requireAdmin() {
   return { user, serviceClient };
 }
 
-const SCANNABLE_TYPES = ["rss", "ai_search"] as const;
+const SCANNABLE_TYPES = ["rss", "ai_search", "scrape"] as const;
 
 export async function POST(
   _request: Request,
@@ -62,10 +62,12 @@ export async function POST(
       );
     }
 
-    const eventName =
-      sourceType === "rss"
-        ? "pipeline/scan.rss.source"
-        : "pipeline/scan.ai-search.source";
+    const eventMap: Record<string, string> = {
+      rss: "pipeline/scan.rss.source",
+      ai_search: "pipeline/scan.ai-search.source",
+      scrape: "pipeline/scan.scrape.source",
+    };
+    const eventName = eventMap[sourceType];
 
     await inngest.send({
       name: eventName,

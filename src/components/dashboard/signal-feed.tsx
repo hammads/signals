@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -42,6 +41,38 @@ const CATEGORY_PILLS: { value: "" | SignalCategory; label: string }[] = [
   { value: "district_lookalike", label: "Look-alike District" },
   { value: "icp_finder", label: "ICP Contact" },
 ];
+
+/** Triggers insight generation when the card scrolls into / near the viewport. */
+function InsightTrigger({
+  matchId,
+  onVisible,
+}: {
+  matchId: string;
+  onVisible: (id: string) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const triggered = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || triggered.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered.current) {
+          triggered.current = true;
+          onVisible(matchId);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [matchId, onVisible]);
+
+  return <div ref={ref} className="absolute inset-0 pointer-events-none" />;
+}
 
 export interface SignalFeedProps {
   initialMatches: SignalMatchWithSignal[];
@@ -165,37 +196,34 @@ export function SignalFeed({
       match.signal != null
   );
 
-  const missingInsightKey = useMemo(() => {
-    const ids = validMatches
-      .filter(
-        (m) =>
-          !m.why_it_matters?.trim() && !m.action_suggestion?.trim()
-      )
-      .map((m) => m.id)
-      .sort();
-    return ids.join(",");
-  }, [validMatches]);
+  // --- Visibility-gated insight generation ---
+  // Instead of eagerly generating insights for every card on mount,
+  // we only generate when a card scrolls into (or near) the viewport.
+  const insightQueueRef = useRef<string[]>([]);
+  const processingRef = useRef(false);
+  const generateInsightRef = useRef(generateInsight);
+  generateInsightRef.current = generateInsight;
 
-  useEffect(() => {
-    if (!missingInsightKey) return;
+  const processInsightQueue = useCallback(async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    while (insightQueueRef.current.length > 0) {
+      const matchId = insightQueueRef.current.shift()!;
+      if (insightCompletedRef.current.has(matchId)) continue;
+      await generateInsightRef.current(matchId, { silent: true });
+    }
+    processingRef.current = false;
+  }, []);
 
-    const ids = missingInsightKey.split(",").filter(Boolean);
-    const pending = ids.filter((id) => !insightCompletedRef.current.has(id));
-    if (pending.length === 0) return;
-
-    let cancelled = false;
-
-    void (async () => {
-      for (const matchId of pending) {
-        if (cancelled) return;
-        await generateInsight(matchId, { silent: true });
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [missingInsightKey, generateInsight]);
+  const enqueueInsight = useCallback(
+    (matchId: string) => {
+      if (insightCompletedRef.current.has(matchId)) return;
+      if (insightQueueRef.current.includes(matchId)) return;
+      insightQueueRef.current.push(matchId);
+      void processInsightQueue();
+    },
+    [processInsightQueue]
+  );
 
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const hasNext = page < totalPages;
@@ -299,22 +327,29 @@ export function SignalFeed({
                 !match.why_it_matters?.trim() &&
                 !match.action_suggestion?.trim();
               return (
-                <SignalCard
-                  key={match.id}
-                  signal={signal}
-                  districts={signal.signal_districts}
-                  relevance_score={match.relevance_score}
-                  why_it_matters={match.why_it_matters}
-                  action_suggestion={match.action_suggestion}
-                  is_read={match.is_read}
-                  is_bookmarked={match.is_bookmarked}
-                  onBookmarkToggle={() =>
-                    handleBookmarkToggle(match.id, match.is_bookmarked)
-                  }
-                  onMarkRead={() => handleMarkRead(match.id)}
-                  insightPending={needsInsight}
-                  insightLoading={insightLoadingId === match.id}
-                />
+                <div key={match.id} className="relative">
+                  {needsInsight && (
+                    <InsightTrigger
+                      matchId={match.id}
+                      onVisible={enqueueInsight}
+                    />
+                  )}
+                  <SignalCard
+                    signal={signal}
+                    districts={signal.signal_districts}
+                    relevance_score={match.relevance_score}
+                    why_it_matters={match.why_it_matters}
+                    action_suggestion={match.action_suggestion}
+                    is_read={match.is_read}
+                    is_bookmarked={match.is_bookmarked}
+                    onBookmarkToggle={() =>
+                      handleBookmarkToggle(match.id, match.is_bookmarked)
+                    }
+                    onMarkRead={() => handleMarkRead(match.id)}
+                    insightPending={needsInsight}
+                    insightLoading={insightLoadingId === match.id}
+                  />
+                </div>
               );
             })}
           </div>

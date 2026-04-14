@@ -211,8 +211,9 @@ export const scanAISearch = inngest.createFunction(
     if (allSignalIds.length > 0) {
       await step.sendEvent("emit-batch-collected", [
         { name: "signal/batch.collected", data: { signalIds: allSignalIds } },
+        { name: "signal/ai-search.completed", data: { signalIds: allSignalIds } },
       ]);
-      await log.info("Emitted signal/batch.collected", { count: allSignalIds.length });
+      await log.info("Emitted signal/batch.collected + signal/ai-search.completed", { count: allSignalIds.length });
     }
 
     if (jobRun?.id) {
