@@ -42,8 +42,6 @@ export interface SignalFeedProps {
   pageSize: number;
   initialCategory?: SignalCategory;
   initialRegion?: string;
-  /** Profile has an embedding; required to run “Scan again”. */
-  canRescan: boolean;
   initialRematchStatus: RematchStatusPayload;
 }
 
@@ -54,7 +52,6 @@ export function SignalFeed({
   pageSize,
   initialCategory,
   initialRegion,
-  canRescan,
   initialRematchStatus,
 }: SignalFeedProps) {
   const router = useRouter();
@@ -141,7 +138,7 @@ export function SignalFeed({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <RematchStatusPanel initialRematchStatus={initialRematchStatus} />
-        <ReMatchButton disabled={!canRescan} className="shrink-0" />
+        <ReMatchButton className="shrink-0" />
       </div>
 
       {/* Filter bar */}

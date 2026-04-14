@@ -1,10 +1,34 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { inngest } from "@/lib/inngest/client";
+
+/** profile_rematch_runs has no user UPDATE RLS policy; use service role with id + user_id filters. */
+async function markRematchRunFailed(
+  service: SupabaseClient,
+  runId: string,
+  userId: string,
+  finishedAt: string,
+  errorMessage: string
+) {
+  const { error } = await service
+    .from("profile_rematch_runs")
+    .update({
+      status: "failed",
+      finished_at: finishedAt,
+      error_message: errorMessage,
+    })
+    .eq("id", runId)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("Failed to update profile_rematch_runs to failed:", error);
+  }
+}
 
 export async function POST() {
   try {
     const supabase = await createClient();
+    const serviceSupabase = await createServiceClient();
     const {
       data: { user },
       error: authError,
@@ -71,15 +95,13 @@ export async function POST() {
 
     if (updateError) {
       console.error("Failed to mark rematch running:", updateError);
-      await supabase
-        .from("profile_rematch_runs")
-        .update({
-          status: "failed",
-          finished_at: new Date().toISOString(),
-          error_message: "Could not start scan",
-        })
-        .eq("id", runId)
-        .eq("user_id", user.id);
+      await markRematchRunFailed(
+        serviceSupabase,
+        runId,
+        user.id,
+        new Date().toISOString(),
+        "Could not start scan"
+      );
       return NextResponse.json(
         { error: "Could not start scan" },
         { status: 500 }
@@ -103,15 +125,13 @@ export async function POST() {
           rematch_error: queueError,
         })
         .eq("user_id", user.id);
-      await supabase
-        .from("profile_rematch_runs")
-        .update({
-          status: "failed",
-          finished_at: finishedAt,
-          error_message: queueError,
-        })
-        .eq("id", runId)
-        .eq("user_id", user.id);
+      await markRematchRunFailed(
+        serviceSupabase,
+        runId,
+        user.id,
+        finishedAt,
+        queueError
+      );
       return NextResponse.json(
         { error: "Could not queue scan. Try again shortly." },
         { status: 503 }

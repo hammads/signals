@@ -57,8 +57,6 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const canRescan = Boolean(signalProfileRow?.profile_embedding?.length);
-
   const sp = signalProfileRow as Pick<
     SignalProfile,
     | "rematch_status"
@@ -102,7 +100,6 @@ export default async function DashboardPage({
       pageSize={PAGE_SIZE}
       initialCategory={category}
       initialRegion={region ?? undefined}
-      canRescan={canRescan}
       initialRematchStatus={initialRematchStatus}
     />
   );
