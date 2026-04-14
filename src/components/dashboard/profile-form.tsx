@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ import {
   type SignalProfileInput,
 } from "@/types/schemas";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TagInput } from "@/components/shared/tag-input";
 import {
@@ -33,7 +35,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { requestProfileRematch } from "@/lib/profile-rematch";
 import type { SignalProfile } from "@/types/database";
 
 const DISTRICT_SIZE_LABELS: Record<(typeof DISTRICT_SIZES)[number], string> = {
@@ -48,6 +59,8 @@ export interface ProfileFormProps {
 
 export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter();
+  const [rescanDialogOpen, setRescanDialogOpen] = useState(false);
+  const [rescanLoading, setRescanLoading] = useState(false);
 
   const form = useForm<SignalProfileInput>({
     resolver: zodResolver(signalProfileSchema),
@@ -77,15 +90,73 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         throw new Error(err.error ?? "Failed to save profile");
       }
 
+      const updated = (await res.json()) as SignalProfile;
       toast.success("Profile saved successfully");
       router.refresh();
+
+      if (updated.profile_embedding?.length) {
+        setRescanDialogOpen(true);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
+  const handleRescanFromDialog = async () => {
+    setRescanLoading(true);
+    try {
+      const result = await requestProfileRematch();
+      if (!result.ok) {
+        throw new Error(result.error);
+      }
+      toast.success(result.message);
+      setRescanDialogOpen(false);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setRescanLoading(false);
+    }
+  };
+
   return (
     <Form {...form}>
+      <Dialog open={rescanDialogOpen} onOpenChange={setRescanDialogOpen}>
+        <DialogContent showCloseButton={!rescanLoading}>
+          <DialogHeader>
+            <DialogTitle>Rescan existing signals?</DialogTitle>
+            <DialogDescription>
+              Your profile was saved. Scan existing signals against your updated
+              preferences? New matches will appear on your signal feed shortly.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRescanDialogOpen(false)}
+              disabled={rescanLoading}
+            >
+              Not now
+            </Button>
+            <Button
+              type="button"
+              onClick={handleRescanFromDialog}
+              disabled={rescanLoading}
+            >
+              {rescanLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting…
+                </>
+              ) : (
+                "Rescan signals"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Card>
           <CardHeader>

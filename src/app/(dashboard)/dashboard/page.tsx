@@ -48,6 +48,14 @@ export default async function DashboardPage({
 
   const { data: rawMatches, error, count } = await query;
 
+  const { data: signalProfileRow } = await supabase
+    .from("signal_profiles")
+    .select("profile_embedding")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const canRescan = Boolean(signalProfileRow?.profile_embedding?.length);
+
   if (error) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
@@ -70,6 +78,7 @@ export default async function DashboardPage({
       pageSize={PAGE_SIZE}
       initialCategory={category}
       initialRegion={region ?? undefined}
+      canRescan={canRescan}
     />
   );
 }

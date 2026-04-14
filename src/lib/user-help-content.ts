@@ -163,7 +163,7 @@ When you save changes on **Profile**:
 - A new embedding is generated
 - It's saved to the database
 
-**Important:** New matches are created when **new signals** are collected and matched. Existing signals are not automatically re-matched. Use **Scan again** on your profile page to re-scan existing signals. See **Getting New Matches After a Profile Update** for details.
+**Important:** New matches are created when **new signals** are collected and matched. Existing signals are not automatically re-matched. After you save, you can choose to rescan from the prompt, or use **Scan again** on the **Signal Feed** to re-scan existing signals. See **Getting New Matches After a Profile Update** for details.
 `,
   },
   {
@@ -194,7 +194,7 @@ Matching is **signal-driven**, not profile-driven:
 
 #### 1. Scan again (For existing signals)
 
-After saving your profile, click **Scan again** below the profile form. This re-scans existing signals against your updated profile. New matches appear in your dashboard shortly after.
+After saving your profile, confirm **Rescan signals** in the dialog if you want an immediate rescan, or go to the **Signal Feed** and click **Scan again**. This re-scans existing signals against your updated profile. New matches appear in your dashboard shortly after.
 
 #### 2. Wait for Scheduled Runs
 
@@ -217,7 +217,7 @@ For immediate new signals, an admin can run the pipeline manually:
 
 ### Summary
 
-> After updating your profile, click **Scan again** to re-scan existing signals. For new signals, new matches will appear as they're collected. To get new signals sooner, ask an admin to run the pipeline from Admin → Pipeline Runs.
+> After updating your profile, use **Rescan signals** when prompted or **Scan again** on the Signal Feed to re-scan existing signals. For new signals, new matches will appear as they're collected. To get new signals sooner, ask an admin to run the pipeline from Admin → Pipeline Runs.
 `,
   },
   {
@@ -280,9 +280,9 @@ Very narrow profiles may have fewer matches because fewer signals pass the relev
 
 **Check:** Did you just sign up or update your profile?
 
-Matching is signal-driven. New matches only appear when **new signals** are collected and matched, or when you click **Scan again** on your profile page to re-scan existing signals.
+Matching is signal-driven. New matches only appear when **new signals** are collected and matched, or when you rescan (after saving your profile, or **Scan again** on the **Signal Feed**).
 
-**Fix:** Click **Scan again** on your profile page to re-scan existing signals. Or wait for the next pipeline run (RSS every 6 hours, SAM.gov every 12 hours, AI Search daily). Or ask an admin to run the pipeline for immediate results.
+**Fix:** Use **Rescan signals** after saving, or click **Scan again** on the **Signal Feed**. Or wait for the next pipeline run (RSS every 6 hours, SAM.gov every 12 hours, AI Search daily). Or ask an admin to run the pipeline for immediate results.
 
 ### 4. Filters Applied
 

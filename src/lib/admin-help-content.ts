@@ -491,7 +491,7 @@ RSS items get categories from title keywords. SAM.gov uses its \`type\` field. A
 
 **Important:** When a user updates their profile, existing signals are **not** automatically re-matched. New matches only appear when:
 
-1. **Scan again** — The user can click **Scan again** on their profile page (\`/profile\`) to re-scan existing signals against their updated profile
+1. **Scan again** — The user can click **Scan again** on the **Signal Feed** (\`/dashboard\`) to re-scan existing signals against their updated profile (or confirm rescan right after saving their profile)
 2. **New signals are collected** — Run the pipeline to pull new content; it will be matched to the updated profile
 `,
   },
@@ -547,7 +547,7 @@ This profile is converted to text, embedded, and used for matching. Users can ed
 
 - Check that they completed onboarding (profile exists)
 - Check that \`profile_embedding\` is set (profile was embedded)
-- Suggest they click **Scan again** on their profile page (re-scans existing signals)
+- Suggest they use **Scan again** on the **Signal Feed** or rescan from the save confirmation (re-scans existing signals)
 - Run the pipeline — new signals will be matched
 - Verify they're looking at the right filters (category, region)
 
@@ -589,8 +589,7 @@ Matching is **signal-driven**, not profile-driven:
 
 #### 1. Scan again (Recommended for existing signals)
 
-- The user goes to **Profile** (\`/profile\`)
-- Clicks **Scan again** below the profile form
+- The user goes to the **Signal Feed** (\`/dashboard\`) and clicks **Scan again**, or confirms **Rescan signals** right after saving **Profile**
 - Existing signals are re-scanned against the updated profile
 - New matches appear in the dashboard shortly after
 
@@ -610,7 +609,7 @@ Matching is **signal-driven**, not profile-driven:
 
 ### Summary for Clients
 
-> **For founders:** After updating your profile, click **Scan again** on your profile page to re-scan existing signals. For new signals, new matches will appear as they're collected. To get new signals sooner, ask an admin to run the pipeline from Admin → Pipeline Runs.
+> **For founders:** After updating your profile, confirm **Rescan signals** when prompted or click **Scan again** on the **Signal Feed** to re-scan existing signals. For new signals, new matches will appear as they're collected. To get new signals sooner, ask an admin to run the pipeline from Admin → Pipeline Runs.
 `,
   },
   {

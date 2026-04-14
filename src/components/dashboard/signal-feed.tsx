@@ -19,6 +19,7 @@ import { Radio, ChevronLeft, ChevronRight } from "lucide-react";
 import type { SignalMatchWithSignal, SignalCategory, SignalDistrictExpanded } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { US_STATES } from "@/types/schemas";
+import { ReMatchButton } from "@/components/dashboard/re-match-button";
 
 const CATEGORY_PILLS: { value: "" | SignalCategory; label: string }[] = [
   { value: "", label: "All" },
@@ -39,6 +40,8 @@ export interface SignalFeedProps {
   pageSize: number;
   initialCategory?: SignalCategory;
   initialRegion?: string;
+  /** Profile has an embedding; required to run “Scan again”. */
+  canRescan: boolean;
 }
 
 export function SignalFeed({
@@ -48,6 +51,7 @@ export function SignalFeed({
   pageSize,
   initialCategory,
   initialRegion,
+  canRescan,
 }: SignalFeedProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -131,6 +135,13 @@ export function SignalFeed({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Scan existing signals against your profile after you make changes on My Profile.
+        </p>
+        <ReMatchButton disabled={!canRescan} className="shrink-0" />
+      </div>
+
       {/* Filter bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">

@@ -5,22 +5,27 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { requestProfileRematch } from "@/lib/profile-rematch";
+import { cn } from "@/lib/utils";
 
-export function ReMatchButton({ disabled }: { disabled?: boolean }) {
+export function ReMatchButton({
+  disabled,
+  className,
+}: {
+  disabled?: boolean;
+  className?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleClick = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/profiles/re-match", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error ?? "Failed to start scan");
+      const result = await requestProfileRematch();
+      if (!result.ok) {
+        throw new Error(result.error);
       }
-
-      toast.success(data.message ?? "Scan started");
+      toast.success(result.message);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -33,6 +38,7 @@ export function ReMatchButton({ disabled }: { disabled?: boolean }) {
     <Button
       type="button"
       variant="outline"
+      className={cn(className)}
       onClick={handleClick}
       disabled={disabled ?? loading}
     >
