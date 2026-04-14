@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { ScanHistoryTable } from "@/components/dashboard/scan-history-table";
+import { ScanHistoryView } from "@/components/dashboard/scan-history-view";
 import { Button } from "@/components/ui/button";
 
 export default async function ScanHistoryPage() {
@@ -48,7 +48,7 @@ export default async function ScanHistoryPage() {
           Could not load scan history.
         </div>
       ) : (
-        <ScanHistoryTable runs={runs ?? []} />
+        <ScanHistoryView initialRuns={runs ?? []} />
       )}
     </div>
   );

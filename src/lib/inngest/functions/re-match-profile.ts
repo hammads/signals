@@ -10,6 +10,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const RELEVANCE_THRESHOLD = 0.4;
 
+async function runWasCancelled(
+  supabase: SupabaseClient,
+  runId: string,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("profile_rematch_runs")
+    .select("status")
+    .eq("id", runId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return !data || data.status !== "running";
+}
+
 async function markRematchCompleted(
   supabase: SupabaseClient,
   userId: string,
@@ -116,6 +130,10 @@ export const reMatchProfile = inngest.createFunction(
 
     const supabase = await createServiceClient();
 
+    if (await runWasCancelled(supabase, runId, userId)) {
+      return { processed: 0, skipped: "cancelled" };
+    }
+
     const { data: profile, error: profileError } = await supabase
       .from("signal_profiles")
       .select("*")
@@ -157,6 +175,9 @@ export const reMatchProfile = inngest.createFunction(
     }
 
     if (!matches?.length) {
+      if (await runWasCancelled(supabase, runId, userId)) {
+        return { processed: 0, skipped: "cancelled" };
+      }
       await markRematchCompleted(supabase, userId, {
         signalsConsidered: 0,
         inserted: 0,
@@ -170,6 +191,9 @@ export const reMatchProfile = inngest.createFunction(
 
     for (const m of matches as Array<{ signal_id: string; similarity: number }>) {
       await step.run(`re-match-signal-${m.signal_id}`, async () => {
+        if (await runWasCancelled(supabase, runId, userId)) {
+          return { skipped: true as const };
+        }
         const { data: signal, error: signalError } = await supabase
           .from("signals")
           .select("*")
@@ -215,6 +239,10 @@ export const reMatchProfile = inngest.createFunction(
           inserted++;
         }
       });
+    }
+
+    if (await runWasCancelled(supabase, runId, userId)) {
+      return { processed: matches.length, skipped: "cancelled" };
     }
 
     await markRematchCompleted(supabase, userId, {

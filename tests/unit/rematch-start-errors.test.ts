@@ -33,7 +33,13 @@ describe("userFacingRematchStartError", () => {
         { message: 'column "rematch_status" does not exist', code: "42703" } as never,
         "update_profile"
       )
-    ).toContain("schema mismatch");
+    ).toContain("migrations");
+  });
+
+  it("maps PGRST204 (column not in API schema cache)", () => {
+    expect(
+      userFacingRematchStartError({ message: "...", code: "PGRST204" } as never, "update_profile")
+    ).toMatch(/rematch|00008|00010/i);
   });
 
   it("includes code for unknown errors", () => {
@@ -41,6 +47,19 @@ describe("userFacingRematchStartError", () => {
       { message: "something obscure", code: "XX999" } as never,
       "insert_run"
     );
-    expect(text).toContain("XX999");
+    expect(text).toMatch(/XX999/);
+  });
+
+  it("appends PostgREST details when present", () => {
+    const text = userFacingRematchStartError(
+      {
+        code: "PGRST204",
+        message: "column not found",
+        details: 'Could not find the \'rematch_status\' column of \'signal_profiles\'',
+      } as never,
+      "update_profile"
+    );
+    expect(text.toLowerCase()).toContain("rematch_status");
+    expect(text).toContain("PGRST204");
   });
 });

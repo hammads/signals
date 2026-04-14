@@ -1,4 +1,6 @@
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -44,12 +46,22 @@ function statusBadgeVariant(
   }
 }
 
-export function ScanHistoryTable({ runs }: { runs: RunRow[] }) {
+export function ScanHistoryTable({
+  runs,
+  onCancelRun,
+  cancellingRunId,
+}: {
+  runs: RunRow[];
+  onCancelRun?: (runId: string) => void;
+  cancellingRunId?: string | null;
+}) {
+  const showActions = Boolean(onCancelRun);
+
   if (runs.length === 0) {
     return (
       <p className="rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-        No scans recorded yet. Run <span className="font-medium text-foreground">Scan again</span>{" "}
-        from the signal feed after saving your profile.
+        No scans recorded yet. Use <span className="font-medium text-foreground">Scan again</span>{" "}
+        above (or on the signal feed) after saving your profile.
       </p>
     );
   }
@@ -65,6 +77,9 @@ export function ScanHistoryTable({ runs }: { runs: RunRow[] }) {
             <TableHead className="text-right">Candidates</TableHead>
             <TableHead className="text-right">New</TableHead>
             <TableHead className="text-right">Updated</TableHead>
+            {showActions ? (
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
+            ) : null}
             <TableHead className="min-w-[200px]">Notes</TableHead>
           </TableRow>
         </TableHeader>
@@ -91,6 +106,31 @@ export function ScanHistoryTable({ runs }: { runs: RunRow[] }) {
               <TableCell className="align-top text-right text-sm tabular-nums">
                 {countOrDash(run.updated)}
               </TableCell>
+              {showActions ? (
+                <TableCell className="align-top text-right">
+                  {run.status === "running" && onCancelRun ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={cancellingRunId === run.id}
+                      onClick={() => onCancelRun(run.id)}
+                    >
+                      {cancellingRunId === run.id ? (
+                        <>
+                          <Loader2 className="mr-1 size-3 animate-spin" />
+                          …
+                        </>
+                      ) : (
+                        "Cancel"
+                      )}
+                    </Button>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+              ) : null}
               <TableCell
                 className={cn(
                   "align-top text-xs",

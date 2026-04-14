@@ -12,7 +12,14 @@ import {
 } from "@/lib/profile-rematch";
 import { cn } from "@/lib/utils";
 
-export function ReMatchButton({ className }: { className?: string }) {
+export function ReMatchButton({
+  className,
+  onRefreshRelated,
+}: {
+  className?: string;
+  /** Called after a scan is queued and when background status polling finishes (e.g. refetch scan history). */
+  onRefreshRelated?: () => void | Promise<void>;
+}) {
   const [requestInFlight, setRequestInFlight] = useState(false);
   const router = useRouter();
 
@@ -25,11 +32,13 @@ export function ReMatchButton({ className }: { className?: string }) {
       }
       toast.success(result.message);
       router.refresh();
+      void Promise.resolve(onRefreshRelated?.());
       void (async () => {
         try {
           const final = await pollRematchUntilTerminal();
           toastRematchOutcome(final, toast);
           router.refresh();
+          void Promise.resolve(onRefreshRelated?.());
         } catch {
           toast.message("Could not confirm scan status — refresh the page later.");
         }
