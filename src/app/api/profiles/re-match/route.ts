@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { inngest } from "@/lib/inngest/client";
+import { userFacingRematchStartError } from "@/lib/rematch-start-errors";
 
 /** profile_rematch_runs has no user UPDATE RLS policy; use service role with id + user_id filters. */
 async function markRematchRunFailed(
@@ -72,10 +73,8 @@ export async function POST() {
 
     if (runInsertError || !runRow?.id) {
       console.error("Failed to create profile_rematch_runs row:", runInsertError);
-      return NextResponse.json(
-        { error: "Could not start scan" },
-        { status: 500 }
-      );
+      const message = userFacingRematchStartError(runInsertError, "insert_run");
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     const runId = runRow.id as string;
@@ -95,17 +94,24 @@ export async function POST() {
 
     if (updateError) {
       console.error("Failed to mark rematch running:", updateError);
+      const message = userFacingRematchStartError(updateError, "update_profile");
+      const finishedAt = new Date().toISOString();
+      await supabase
+        .from("signal_profiles")
+        .update({
+          rematch_status: "failed",
+          rematch_finished_at: finishedAt,
+          rematch_error: message,
+        })
+        .eq("user_id", user.id);
       await markRematchRunFailed(
         serviceSupabase,
         runId,
         user.id,
-        new Date().toISOString(),
-        "Could not start scan"
+        finishedAt,
+        message
       );
-      return NextResponse.json(
-        { error: "Could not start scan" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     try {
